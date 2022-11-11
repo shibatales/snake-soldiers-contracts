@@ -3,10 +3,12 @@
 pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@rmrk-team/evm-contracts/contracts/RMRK/access/OwnableLock.sol";
+import "./utils/Ownable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
+// Imported so it's included on typechain. We'll need it to display NFTs NFTs
+import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKEquipRenderUtils.sol";
 
 error MaxGiftsPerPhaseReached();
 error MaxPhaseReached();
@@ -15,9 +17,10 @@ error MintUnderpriced();
 error MintZero();
 error NextPhasePriceMustBeEqualOrHigher();
 error SaleNotOpen();
+error ElementAlreadyRevealed();
 
 contract SnakeSoldier is
-    OwnableLock,
+    Ownable,
     RMRKCollectionMetadata,
     RMRKRoyalties,
     RMRKEquippable
@@ -47,15 +50,31 @@ contract SnakeSoldier is
     uint256 private _pricePerCommander;
     uint256 private _pricePerGeneral;
 
-    string private _generalsTokenUri;
-    string private _commandersTokenUri;
-    string private _soldiersTokenUri;
+    string private _defaultTokenUri;
     mapping(uint64 => uint256) private _isTokenResourceEnumerated;
 
     uint256 private constant _MAX_SUPPLY_PER_PHASE_SOLDIERS = 1200; // A maximum possible of 1200*4=4800
     uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
     uint256 private constant _MAX_SUPPLY_PER_PHASE_GENERALS = 5; // A maximum possible of 5*4=20
     uint256 private constant _MAX_PHASES = 4;
+
+    mapping(uint256 => uint256) private _elementRevealed;
+    uint64 private constant _RES_ID_SOLDIER_EGG = 1;
+    uint64 private constant _RES_ID_COMMANDER_EGG = 2;
+    uint64 private constant _RES_ID_GENERAL_EGG = 3;
+    uint64 private constant _RES_ID_SOLDIER_EGG_FIRE = 4;
+    // uint64 private constant _RES_ID_SOLDIER_EGG_EARTH = 5;
+    // uint64 private constant _RES_ID_SOLDIER_EGG_WATER = 6;
+    // uint64 private constant _RES_ID_SOLDIER_EGG_AIR = 7;
+    uint64 private constant _RES_ID_COMMANDER_EGG_FIRE = 8;
+    // uint64 private constant _RES_ID_COMMANDER_EGG_EARTH = 9;
+    // uint64 private constant _RES_ID_COMMANDER_EGG_WATER = 10;
+    // uint64 private constant _RES_ID_COMMANDER_EGG_AIR = 11;
+    uint64 private constant _RES_ID_GENERAL_EGG_FIRE = 12;
+    // uint64 private constant _RES_ID_GENERAL_EGG_EARTH = 13;
+    // uint64 private constant _RES_ID_GENERAL_EGG_WATER = 14;
+    // uint64 private constant _RES_ID_GENERAL_EGG_AIR = 15;
+    // uint64 private constant _RES_ID_SNAKE = 16;
 
     uint256 private constant _GENERALS_OFFSET = 0; // No offset.
     uint256 private constant _COMMANDERS_OFFSET =
@@ -66,9 +85,7 @@ contract SnakeSoldier is
 
     constructor(
         string memory collectionMetadata_,
-        string memory generalsTokenUri,
-        string memory commandersTokenUri,
-        string memory soldiersTokenUri,
+        string memory defaultTokenUri,
         uint256 maxGiftsPerPhase_
     )
         RMRKCollectionMetadata(collectionMetadata_)
@@ -76,17 +93,11 @@ contract SnakeSoldier is
         RMRKEquippable("Snake Soldiers", "SS")
     {
         // _phase = 0;  // Value is already 0
-        _generalsTokenUri = generalsTokenUri;
-        _commandersTokenUri = commandersTokenUri;
-        _soldiersTokenUri = soldiersTokenUri;
+        _defaultTokenUri = defaultTokenUri;
         _maxGiftsPerPhase = maxGiftsPerPhase_;
     }
 
-    function mint(
-        address to,
-        uint256 numToMint,
-        Rank rank
-    ) external payable {
+    function mint(address to, uint256 numToMint, Rank rank) external payable {
         _mintChecks(numToMint, rank);
 
         uint256 mintPriceRequired = numToMint * pricePerMint(rank);
@@ -112,19 +123,25 @@ contract SnakeSoldier is
             revert MintOverMax();
     }
 
-    function _innerMint(
-        address to,
-        uint256 numToMint,
-        Rank rank
-    ) private {
+    function _innerMint(address to, uint256 numToMint, Rank rank) private {
         uint256 nextToken = _totalSupply[rank] + 1 + _rankOffset(rank);
         unchecked {
             _totalSupply[rank] += numToMint;
         }
         uint256 totalSupplyOffset = nextToken + numToMint;
+        uint64 resourceId;
 
         for (uint256 i = nextToken; i < totalSupplyOffset; ) {
             _safeMint(to, i);
+            if (i > _SOLDIERS_OFFSET) {
+                resourceId = _RES_ID_SOLDIER_EGG;
+            } else if (i > _COMMANDERS_OFFSET) {
+                resourceId = _RES_ID_COMMANDER_EGG;
+            } else {
+                resourceId = _RES_ID_GENERAL_EGG;
+            }
+            _addResourceToToken(i, resourceId, 0);
+            _acceptResource(i, 0, resourceId);
             unchecked {
                 ++i;
             }
@@ -217,11 +234,9 @@ contract SnakeSoldier is
         else return _pricePerGeneral;
     }
 
-    function updateRoyaltyRecipient(address newRoyaltyRecipient)
-        external
-        override
-        onlyOwner
-    {
+    function updateRoyaltyRecipient(
+        address newRoyaltyRecipient
+    ) external override onlyOwner {
         _setRoyaltyRecipient(newRoyaltyRecipient);
     }
 
@@ -259,18 +274,14 @@ contract SnakeSoldier is
         else return _GENERALS_OFFSET;
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
-        if (tokenId <= _COMMANDERS_OFFSET) return _generalsTokenUri;
-        else if (tokenId <= _SOLDIERS_OFFSET) return _commandersTokenUri;
-        else return _soldiersTokenUri;
+    function tokenURI(uint256) public view override returns (string memory) {
+        return _defaultTokenUri;
     }
 
-    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
+    function getResourceMetadata(
+        uint256 tokenId,
+        uint64 resourceId
+    )
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)
@@ -282,11 +293,59 @@ contract SnakeSoldier is
         return metaUri;
     }
 
-    function setResourceEnumerated(uint64 resourceId, bool enumerated)
-        external
-        onlyOwner
-    {
+    function setResourceEnumerated(
+        uint64 resourceId,
+        bool enumerated
+    ) external onlyOwner {
         if (enumerated) _isTokenResourceEnumerated[resourceId] = 1;
         else delete _isTokenResourceEnumerated[resourceId];
+    }
+
+    // This is not ideal but we add it since we had no time for an indexer.
+    function getTokensAndOwners(
+        uint256 initId,
+        uint256 size
+    ) external view returns (uint256[] memory, address[] memory) {
+        uint256 lastId = initId + size - 1;
+        uint256 totalSupply_ = totalSupply();
+        if (lastId > totalSupply_) {
+            lastId = totalSupply_;
+            size = lastId - initId + 1;
+        }
+        address[] memory owners = new address[](size);
+        uint256[] memory ids = new uint256[](size);
+
+        for (uint256 i; i < size; ) {
+            owners[i] = ownerOf(i + initId);
+            ids[i] = i + initId;
+            unchecked {
+                ++i;
+            }
+        }
+
+        return (ids, owners);
+    }
+
+    function revealElement(
+        uint256 tokenId
+    ) external onlyApprovedForResourcesOrOwner(tokenId) {
+        if (_elementRevealed[tokenId] == 1) revert ElementAlreadyRevealed();
+        _elementRevealed[tokenId] = 1;
+        uint64 newResourceId;
+        uint64 oldResourceId;
+
+        // The "+ tokenId % 4" part, sets the resource for the right element
+        if (tokenId > _SOLDIERS_OFFSET) {
+            oldResourceId = _RES_ID_SOLDIER_EGG;
+            newResourceId = _RES_ID_SOLDIER_EGG_FIRE + uint64(tokenId % 4);
+        } else if (tokenId > _COMMANDERS_OFFSET) {
+            oldResourceId = _RES_ID_COMMANDER_EGG;
+            newResourceId = _RES_ID_COMMANDER_EGG_FIRE + uint64(tokenId % 4);
+        } else {
+            oldResourceId = _RES_ID_GENERAL_EGG;
+            newResourceId = _RES_ID_GENERAL_EGG_FIRE + uint64(tokenId % 4);
+        }
+        _addResourceToToken(tokenId, newResourceId, oldResourceId);
+        _acceptResource(tokenId, 0, newResourceId);
     }
 }

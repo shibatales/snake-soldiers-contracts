@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.16;
 
+import "./ISerpenterraPassport.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/access/OwnableLock.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
@@ -15,6 +16,7 @@ contract FactionGem is
     OwnableLock,
     RMRKCollectionMetadata,
     RMRKRoyalties,
+    RMRKSoulbound,
     RMRKEquippable
 {
     address private immutable _snakeSoldiers;
@@ -25,7 +27,7 @@ contract FactionGem is
     uint256 private immutable _maxSupply;
 
     uint64 private constant _MAIN_RESOURCE_ID = uint64(1);
-    uint64 private constant _EQUIP_RESOURCE_ID = uint64(2);
+    // uint64 private constant _EQUIP_RESOURCE_ID = uint64(2);
 
     string private constant _POST_URL_PER_TYPE_ISLANDS = "islands";
     string private constant _POST_URL_PER_TYPE_DESERT = "desert";
@@ -89,10 +91,11 @@ contract FactionGem is
         address owner = IRMRKNesting(_snakeSoldiers).ownerOf(snakeTokenId);
         if (_msgSender() != owner) revert CannotMintGemForNotOwnedToken();
         _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId);
-        _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
         _addResourceToToken(snakeTokenId, _MAIN_RESOURCE_ID, uint64(0));
-        _acceptResource(snakeTokenId, 1, _MAIN_RESOURCE_ID);
-        _acceptResource(snakeTokenId, 0, _EQUIP_RESOURCE_ID);
+        _acceptResource(snakeTokenId, 0, _MAIN_RESOURCE_ID);
+        // This resource is not yet ready
+        // _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
+        // _acceptResource(snakeTokenId, 0, _EQUIP_RESOURCE_ID);
     }
 
     function addResourceEntry(
@@ -147,11 +150,9 @@ contract FactionGem is
         return _maxSupply;
     }
 
-    function updateRoyaltyRecipient(address newRoyaltyRecipient)
-        external
-        override
-        onlyOwner
-    {
+    function updateRoyaltyRecipient(
+        address newRoyaltyRecipient
+    ) external override onlyOwner {
         _setRoyaltyRecipient(newRoyaltyRecipient);
     }
 
@@ -164,7 +165,10 @@ contract FactionGem is
         return _tokenURI;
     }
 
-    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
+    function getResourceMetadata(
+        uint256 tokenId,
+        uint64 resourceId
+    )
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)
@@ -173,6 +177,30 @@ contract FactionGem is
         string memory metaUri = super.getResourceMetadata(tokenId, resourceId);
         string memory postUri = _postUriFor(tokenId);
         return string(abi.encodePacked(metaUri, postUri));
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        virtual
+        override(RMRKSoulbound, IERC165, RMRKEquippable)
+        returns (bool)
+    {
+        return
+            RMRKSoulbound.supportsInterface(interfaceId) ||
+            super.supportsInterface(interfaceId);
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual override(RMRKCore, RMRKSoulbound) {
+        super._beforeTokenTransfer(from, to, tokenId);
+        address owner = ownerOf(tokenId);
+        ISerpenterraPassport(_passportAddress).burnFromFactionGem(owner, 1);
     }
 
     // Factions are assigned round robing style, it's an easy way to make sure
@@ -193,12 +221,14 @@ contract FactionGem is
         else return _POST_URL_PER_TYPE_FOREST;
     }
 
-    function isSoulbound(uint256 tokenId) public view virtual returns (bool) {
+    function isSoulbound(uint256 tokenId) public view override returns (bool) {
         uint256 mod = tokenId % 5;
         if (mod == 4) return false; // Forest gem is not soulbound
 
         address owner = ownerOf(tokenId);
-        uint256 balance = RMRKEquippable(_passportAddress).balanceOf(owner);
+        uint256 balance = ISerpenterraPassport(_passportAddress).balanceOf(
+            owner
+        );
         // Idea: I want to get the balance of the snake that owns this token.
         // I can only get the balance of the snake contract
         // If owner has no passport, then it is soulbound.

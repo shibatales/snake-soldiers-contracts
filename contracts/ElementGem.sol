@@ -25,7 +25,7 @@ contract ElementGem is
     uint256 private immutable _maxSupply;
 
     uint64 private constant _MAIN_RESOURCE_ID = uint64(1);
-    uint64 private constant _EQUIP_RESOURCE_ID = uint64(2);
+    // uint64 private constant _EQUIP_RESOURCE_ID = uint64(2);
 
     string private constant _POST_URL_PER_TYPE_FIRE = "fire";
     string private constant _POST_URL_PER_TYPE_EARTH = "earth";
@@ -47,7 +47,9 @@ contract ElementGem is
         _tokenURI = tokenURI_;
     }
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual
@@ -99,10 +101,11 @@ contract ElementGem is
         address owner = IRMRKNesting(_snakeSoldiers).ownerOf(snakeTokenId);
         if (_msgSender() != owner) revert CannotMintGemForNotOwnedToken();
         _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId);
-        _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
         _addResourceToToken(snakeTokenId, _MAIN_RESOURCE_ID, uint64(0));
-        _acceptResource(snakeTokenId, 1, _MAIN_RESOURCE_ID);
-        _acceptResource(snakeTokenId, 0, _EQUIP_RESOURCE_ID);
+        _acceptResource(snakeTokenId, 0, _MAIN_RESOURCE_ID);
+        // This resource is not yet ready
+        // _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
+        // _acceptResource(snakeTokenId, 0, _EQUIP_RESOURCE_ID);
     }
 
     function addResourceEntry(
@@ -157,11 +160,9 @@ contract ElementGem is
         return _maxSupply;
     }
 
-    function updateRoyaltyRecipient(address newRoyaltyRecipient)
-        external
-        override
-        onlyOwner
-    {
+    function updateRoyaltyRecipient(
+        address newRoyaltyRecipient
+    ) external override onlyOwner {
         _setRoyaltyRecipient(newRoyaltyRecipient);
     }
 
@@ -174,7 +175,10 @@ contract ElementGem is
         return _tokenURI;
     }
 
-    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
+    function getResourceMetadata(
+        uint256 tokenId,
+        uint64 resourceId
+    )
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)

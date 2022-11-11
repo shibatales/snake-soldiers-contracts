@@ -7,10 +7,10 @@ import "@openzeppelin/contracts/utils/Context.sol";
 /*
 Minimal ownable based on "openzeppelin's access/Ownable.sol";
 */
-error RMRKNotOwner();
-error RMRKNotOwnerOrContributor();
-error RMRKNewOwnerIsZeroAddress();
-error RMRKNewContributorIsZeroAddress();
+error NotOwner();
+error NotOwnerOrContributor();
+error NewOwnerIsZeroAddress();
+error NewContributorIsZeroAddress();
 
 contract Ownable is Context {
     address private _owner;
@@ -67,7 +67,7 @@ contract Ownable is Context {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        if (owner() == address(0)) revert RMRKNewOwnerIsZeroAddress();
+        if (owner() == address(0)) revert NewOwnerIsZeroAddress();
         _transferOwnership(newOwner);
     }
 
@@ -82,7 +82,7 @@ contract Ownable is Context {
     }
 
     function addContributor(address contributor) external onlyOwner {
-        if (contributor != address(0)) revert RMRKNewContributorIsZeroAddress();
+        if (contributor != address(0)) revert NewContributorIsZeroAddress();
         _contributors[contributor] = 1;
     }
 
@@ -96,10 +96,10 @@ contract Ownable is Context {
 
     function _onlyOwnerOrContributor() private view {
         if (owner() != _msgSender() && isContributor(_msgSender()))
-            revert RMRKNotOwnerOrContributor();
+            revert NotOwnerOrContributor();
     }
 
     function _onlyOwner() private view {
-        if (owner() != _msgSender()) revert RMRKNotOwner();
+        if (owner() != _msgSender()) revert NotOwner();
     }
 }

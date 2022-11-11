@@ -23,7 +23,7 @@ contract SkillGem is
     uint256 private immutable _maxSupply;
 
     uint64 private constant _MAIN_RESOURCE_ID = uint64(1);
-    uint64 private constant _EQUIP_RESOURCE_ID = uint64(2);
+    // uint64 private constant _EQUIP_RESOURCE_ID = uint64(2);
 
     string private constant _POST_URL_PER_TYPE_COMBAT = "combat";
     string private constant _POST_URL_PER_TYPE_TANK = "tank";
@@ -84,10 +84,11 @@ contract SkillGem is
         address owner = IRMRKNesting(_snakeSoldiers).ownerOf(snakeTokenId);
         if (_msgSender() != owner) revert CannotMintGemForNotOwnedToken();
         _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId);
-        _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
         _addResourceToToken(snakeTokenId, _MAIN_RESOURCE_ID, uint64(0));
-        _acceptResource(snakeTokenId, 1, _EQUIP_RESOURCE_ID);
         _acceptResource(snakeTokenId, 0, _MAIN_RESOURCE_ID);
+        // This resource is not yet ready
+        // _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
+        // _acceptResource(snakeTokenId, 0, _EQUIP_RESOURCE_ID);
     }
 
     function addResourceEntry(
@@ -142,11 +143,9 @@ contract SkillGem is
         return _maxSupply;
     }
 
-    function updateRoyaltyRecipient(address newRoyaltyRecipient)
-        external
-        override
-        onlyOwner
-    {
+    function updateRoyaltyRecipient(
+        address newRoyaltyRecipient
+    ) external override onlyOwner {
         _setRoyaltyRecipient(newRoyaltyRecipient);
     }
 
@@ -159,7 +158,10 @@ contract SkillGem is
         return _tokenURI;
     }
 
-    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
+    function getResourceMetadata(
+        uint256 tokenId,
+        uint64 resourceId
+    )
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)
