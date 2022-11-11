@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.16;
 
-import "./utils/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@rmrk-team/evm-contracts/contracts/RMRK/access/OwnableLock.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
@@ -17,7 +17,7 @@ error NextPhasePriceMustBeEqualOrHigher();
 error SaleNotOpen();
 
 contract SnakeSoldier is
-    Ownable,
+    OwnableLock,
     RMRKCollectionMetadata,
     RMRKRoyalties,
     RMRKEquippable
@@ -134,11 +134,21 @@ contract SnakeSoldier is
     }
 
     function addResourceEntry(
-        ExtendedResource calldata resource,
-        uint64[] calldata fixedPartIds,
-        uint64[] calldata slotPartIds
+        uint64 id,
+        uint64 equippableGroupId,
+        address baseAddress,
+        string memory metadataURI,
+        uint64[] memory fixedPartIds,
+        uint64[] memory slotPartIds
     ) external onlyOwnerOrContributor {
-        _addResourceEntry(resource, fixedPartIds, slotPartIds);
+        _addResourceEntry(
+            id,
+            equippableGroupId,
+            baseAddress,
+            metadataURI,
+            fixedPartIds,
+            slotPartIds
+        );
     }
 
     function addResourceToTokens(
@@ -260,16 +270,13 @@ contract SnakeSoldier is
         else return _soldiersTokenUri;
     }
 
-    function getResourceMetaForToken(uint256 tokenId, uint64 resourceIndex)
+    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)
         returns (string memory)
     {
-        if (resourceIndex >= getActiveResources(tokenId).length)
-            revert RMRKIndexOutOfRange();
-        uint64 resourceId = getActiveResources(tokenId)[resourceIndex];
-        string memory metaUri = getResourceMeta(resourceId);
+        string memory metaUri = super.getResourceMetadata(tokenId, resourceId);
         if (_isTokenResourceEnumerated[resourceId] != 0)
             metaUri = string(abi.encodePacked(metaUri, tokenId.toString()));
         return metaUri;

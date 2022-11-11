@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.16;
 
-import "./utils/Ownable.sol";
+import "@rmrk-team/evm-contracts/contracts/RMRK/access/OwnableLock.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
@@ -11,7 +11,7 @@ error GemAlreadyClaimed();
 error CannotMintGemForNotOwnedToken();
 
 contract SkillGem is
-    Ownable,
+    OwnableLock,
     RMRKCollectionMetadata,
     RMRKRoyalties,
     RMRKEquippable
@@ -27,7 +27,7 @@ contract SkillGem is
 
     string private constant _POST_URL_PER_TYPE_COMBAT = "combat";
     string private constant _POST_URL_PER_TYPE_TANK = "tank";
-    string private constant _POST_URL_PER_TYPE_HEAL = "heal";
+    string private constant _POST_URL_PER_TYPE_HEAL = "healer";
     string private constant _POST_URL_PER_TYPE_SNIPER = "sniper";
 
     uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
@@ -86,16 +86,26 @@ contract SkillGem is
         _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId);
         _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
         _addResourceToToken(snakeTokenId, _MAIN_RESOURCE_ID, uint64(0));
-        _acceptResource(snakeTokenId, 1);
-        _acceptResource(snakeTokenId, 0);
+        _acceptResource(snakeTokenId, 1, _EQUIP_RESOURCE_ID);
+        _acceptResource(snakeTokenId, 0, _MAIN_RESOURCE_ID);
     }
 
     function addResourceEntry(
-        ExtendedResource calldata resource,
-        uint64[] calldata fixedPartIds,
-        uint64[] calldata slotPartIds
+        uint64 id,
+        uint64 equippableGroupId,
+        address baseAddress,
+        string memory metadataURI,
+        uint64[] memory fixedPartIds,
+        uint64[] memory slotPartIds
     ) external onlyOwnerOrContributor {
-        _addResourceEntry(resource, fixedPartIds, slotPartIds);
+        _addResourceEntry(
+            id,
+            equippableGroupId,
+            baseAddress,
+            metadataURI,
+            fixedPartIds,
+            slotPartIds
+        );
     }
 
     function addResourceToTokens(
@@ -149,19 +159,15 @@ contract SkillGem is
         return _tokenURI;
     }
 
-    function getResourceMetaForToken(uint256 tokenId, uint64 resourceIndex)
+    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)
         returns (string memory)
     {
-        if (resourceIndex >= getActiveResources(tokenId).length)
-            revert RMRKIndexOutOfRange();
-        uint64 resourceId = getActiveResources(tokenId)[resourceIndex];
-        string memory metaUri = getResourceMeta(resourceId);
+        string memory metaUri = super.getResourceMetadata(tokenId, resourceId);
         string memory postUri = _postUriFor(tokenId);
-        metaUri = string(abi.encodePacked(metaUri, postUri));
-        return metaUri;
+        return string(abi.encodePacked(metaUri, postUri));
     }
 
     // Skills are assigned round robing style but with 2 at a time:

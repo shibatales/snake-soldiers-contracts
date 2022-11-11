@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.16;
 
-import "./utils/Ownable.sol";
+import "@rmrk-team/evm-contracts/contracts/RMRK/access/OwnableLock.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/soulbound/RMRKSoulbound.sol";
@@ -12,7 +12,7 @@ error GemAlreadyClaimed();
 error CannotMintGemForNotOwnedToken();
 
 contract ElementGem is
-    Ownable,
+    OwnableLock,
     RMRKCollectionMetadata,
     RMRKRoyalties,
     RMRKSoulbound,
@@ -101,16 +101,26 @@ contract ElementGem is
         _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId);
         _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
         _addResourceToToken(snakeTokenId, _MAIN_RESOURCE_ID, uint64(0));
-        _acceptResource(snakeTokenId, 1);
-        _acceptResource(snakeTokenId, 0);
+        _acceptResource(snakeTokenId, 1, _MAIN_RESOURCE_ID);
+        _acceptResource(snakeTokenId, 0, _EQUIP_RESOURCE_ID);
     }
 
     function addResourceEntry(
-        ExtendedResource calldata resource,
-        uint64[] calldata fixedPartIds,
-        uint64[] calldata slotPartIds
+        uint64 id,
+        uint64 equippableGroupId,
+        address baseAddress,
+        string memory metadataURI,
+        uint64[] memory fixedPartIds,
+        uint64[] memory slotPartIds
     ) external onlyOwnerOrContributor {
-        _addResourceEntry(resource, fixedPartIds, slotPartIds);
+        _addResourceEntry(
+            id,
+            equippableGroupId,
+            baseAddress,
+            metadataURI,
+            fixedPartIds,
+            slotPartIds
+        );
     }
 
     function addResourceToTokens(
@@ -164,19 +174,15 @@ contract ElementGem is
         return _tokenURI;
     }
 
-    function getResourceMetaForToken(uint256 tokenId, uint64 resourceIndex)
+    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)
         returns (string memory)
     {
-        if (resourceIndex >= getActiveResources(tokenId).length)
-            revert RMRKIndexOutOfRange();
-        uint64 resourceId = getActiveResources(tokenId)[resourceIndex];
-        string memory metaUri = getResourceMeta(resourceId);
+        string memory metaUri = super.getResourceMetadata(tokenId, resourceId);
         string memory postUri = _postUriFor(tokenId);
-        metaUri = string(abi.encodePacked(metaUri, postUri));
-        return metaUri;
+        return string(abi.encodePacked(metaUri, postUri));
     }
 
     // Elements are assigned round robing style, it's an easy way to make sure

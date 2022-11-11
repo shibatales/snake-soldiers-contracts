@@ -256,32 +256,26 @@ describe('SnakeSoldiers', async () => {
 
       beforeEach(async () => {
         await token.addResourceEntry(
-          {
-            id: RES_ID_SOLDIER_EGG,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://soldierEgg',
-          },
+          RES_ID_SOLDIER_EGG,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://soldierEgg',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_COMMANDER_EGG,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://commanderEgg',
-          },
+          RES_ID_COMMANDER_EGG,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://commanderEgg',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_GENERAL_EGG,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://generalEgg',
-          },
+          RES_ID_GENERAL_EGG,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://generalEgg',
           [],
           [],
         );
@@ -291,62 +285,46 @@ describe('SnakeSoldiers', async () => {
         await token.addResourceToTokens([1], RES_ID_GENERAL_EGG, EMPTY_OVERWRITES);
 
         const tokenIds = [1, 21, 22, 201, 202, 203, 204];
-        for (let i = 0; i < tokenIds.length; i++) {
-          await token.connect(buyer).acceptResource(tokenIds[i], 0);
-        }
+        await token.connect(buyer).acceptResource(201, 0, RES_ID_SOLDIER_EGG);
+        await token.connect(buyer).acceptResource(202, 0, RES_ID_SOLDIER_EGG);
+        await token.connect(buyer).acceptResource(203, 0, RES_ID_SOLDIER_EGG);
+        await token.connect(buyer).acceptResource(204, 0, RES_ID_SOLDIER_EGG);
+        await token.connect(buyer).acceptResource(21, 0, RES_ID_COMMANDER_EGG);
+        await token.connect(buyer).acceptResource(22, 0, RES_ID_COMMANDER_EGG);
+        await token.connect(buyer).acceptResource(1, 0, RES_ID_GENERAL_EGG);
       });
 
       it('can get resource meta for tokens on each rank', async function () {
-        expect(await token.getResourceMetaForToken(201, 0)).to.eql('ipfs://soldierEgg');
-        expect(await token.getResourceMetaForToken(202, 0)).to.eql('ipfs://soldierEgg');
-        expect(await token.getResourceMetaForToken(21, 0)).to.eql('ipfs://commanderEgg');
-        expect(await token.getResourceMetaForToken(22, 0)).to.eql('ipfs://commanderEgg');
-        expect(await token.getResourceMetaForToken(1, 0)).to.eql('ipfs://generalEgg');
+        expect(await token.getResourceMetadata(201, RES_ID_SOLDIER_EGG)).to.eql('ipfs://soldierEgg');
+        expect(await token.getResourceMetadata(202, RES_ID_SOLDIER_EGG)).to.eql('ipfs://soldierEgg');
+        expect(await token.getResourceMetadata(21, RES_ID_COMMANDER_EGG)).to.eql('ipfs://commanderEgg');
+        expect(await token.getResourceMetadata(22, RES_ID_COMMANDER_EGG)).to.eql('ipfs://commanderEgg');
+        expect(await token.getResourceMetadata(1, RES_ID_GENERAL_EGG)).to.eql('ipfs://generalEgg');
       });
 
       it('can replace basic eggs for element eggs', async function () {
         await addElementEggsResources();
-        await token.addResourceToTokens([201, 202], RES_ID_SOLDIER_EGG_FIRE, RES_ID_SOLDIER_EGG);
-        await token.addResourceToTokens([203, 204], RES_ID_SOLDIER_EGG_WATER, RES_ID_SOLDIER_EGG);
-        await token.addResourceToTokens([21], RES_ID_COMMANDER_EGG_EARTH, RES_ID_COMMANDER_EGG);
-        await token.addResourceToTokens([22], RES_ID_COMMANDER_EGG_AIR, RES_ID_COMMANDER_EGG);
-        await token.addResourceToTokens([1], RES_ID_GENERAL_EGG_FIRE, RES_ID_GENERAL_EGG);
+        await addElementEggsToTokens();
 
-        const tokenIds = [1, 21, 22, 201, 202, 203, 204];
-        for (let i = 0; i < tokenIds.length; i++) {
-          await token.connect(buyer).acceptResource(tokenIds[i], 0);
-        }
-
-        expect(await token.getResourceMetaForToken(201, 0)).to.eql('ipfs://soldierEgg/fire');
-        expect(await token.getResourceMetaForToken(203, 0)).to.eql('ipfs://soldierEgg/water');
-        expect(await token.getResourceMetaForToken(21, 0)).to.eql('ipfs://commanderEgg/earth');
-        expect(await token.getResourceMetaForToken(22, 0)).to.eql('ipfs://commanderEgg/air');
-        expect(await token.getResourceMetaForToken(1, 0)).to.eql('ipfs://generalEgg/fire');
+        expect(await token.getResourceMetadata(201, RES_ID_SOLDIER_EGG_FIRE)).to.eql('ipfs://soldierEgg/fire');
+        expect(await token.getResourceMetadata(203, RES_ID_SOLDIER_EGG_WATER)).to.eql('ipfs://soldierEgg/water');
+        expect(await token.getResourceMetadata(21, RES_ID_COMMANDER_EGG_EARTH)).to.eql('ipfs://commanderEgg/earth');
+        expect(await token.getResourceMetadata(22, RES_ID_COMMANDER_EGG_AIR)).to.eql('ipfs://commanderEgg/air');
+        expect(await token.getResourceMetadata(1, RES_ID_GENERAL_EGG_FIRE)).to.eql('ipfs://generalEgg/fire');
       });
 
       it('can replace element eggs for snake resources', async function () {
         // We replace basic eggs for element eggs first.
         await addElementEggsResources();
-        await token.addResourceToTokens([201, 202], RES_ID_SOLDIER_EGG_FIRE, RES_ID_SOLDIER_EGG);
-        await token.addResourceToTokens([203, 204], RES_ID_SOLDIER_EGG_WATER, RES_ID_SOLDIER_EGG);
-        await token.addResourceToTokens([21], RES_ID_COMMANDER_EGG_EARTH, RES_ID_COMMANDER_EGG);
-        await token.addResourceToTokens([22], RES_ID_COMMANDER_EGG_AIR, RES_ID_COMMANDER_EGG);
-        await token.addResourceToTokens([1], RES_ID_GENERAL_EGG_FIRE, RES_ID_GENERAL_EGG);
-
-        const tokenIds = [1, 21, 22, 201, 202, 203, 204];
-        for (let i = 0; i < tokenIds.length; i++) {
-          await token.connect(buyer).acceptResource(tokenIds[i], 0);
-        }
+        await addElementEggsToTokens();
 
         // Now replace for enumerated soldier resources
 
         await token.addResourceEntry(
-          {
-            id: RES_ID_SNAKE,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://soldier/',
-          },
+          RES_ID_SNAKE,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://soldier/',
           [],
           [],
         );
@@ -357,141 +335,134 @@ describe('SnakeSoldiers', async () => {
         await token.addResourceToTokens([22], RES_ID_SNAKE, RES_ID_COMMANDER_EGG_AIR);
         await token.addResourceToTokens([1], RES_ID_SNAKE, RES_ID_GENERAL_EGG_FIRE);
 
+        const tokenIds = [1, 21, 22, 201, 202, 203, 204];
         for (let i = 0; i < tokenIds.length; i++) {
-          await token.connect(buyer).acceptResource(tokenIds[i], 0);
+          await token.connect(buyer).acceptResource(tokenIds[i], 0, RES_ID_SNAKE);
         }
 
-        expect(await token.getResourceMetaForToken(201, 0)).to.eql('ipfs://soldier/201');
-        expect(await token.getResourceMetaForToken(203, 0)).to.eql('ipfs://soldier/203');
-        expect(await token.getResourceMetaForToken(21, 0)).to.eql('ipfs://soldier/21');
-        expect(await token.getResourceMetaForToken(22, 0)).to.eql('ipfs://soldier/22');
-        expect(await token.getResourceMetaForToken(1, 0)).to.eql('ipfs://soldier/1');
+        expect(await token.getResourceMetadata(201, RES_ID_SNAKE)).to.eql('ipfs://soldier/201');
+        expect(await token.getResourceMetadata(203, RES_ID_SNAKE)).to.eql('ipfs://soldier/203');
+        expect(await token.getResourceMetadata(21, RES_ID_SNAKE)).to.eql('ipfs://soldier/21');
+        expect(await token.getResourceMetadata(22, RES_ID_SNAKE)).to.eql('ipfs://soldier/22');
+        expect(await token.getResourceMetadata(1, RES_ID_SNAKE)).to.eql('ipfs://soldier/1');
       });
 
       async function addElementEggsResources() {
         // SOLDIERS
         await token.addResourceEntry(
-          {
-            id: RES_ID_SOLDIER_EGG_FIRE,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://soldierEgg/fire',
-          },
+          RES_ID_SOLDIER_EGG_FIRE,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://soldierEgg/fire',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_SOLDIER_EGG_WATER,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://soldierEgg/water',
-          },
+          RES_ID_SOLDIER_EGG_WATER,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://soldierEgg/water',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_SOLDIER_EGG_AIR,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://soldierEgg/air',
-          },
+          RES_ID_SOLDIER_EGG_AIR,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://soldierEgg/air',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_SOLDIER_EGG_EARTH,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://soldierEgg/earth',
-          },
+          RES_ID_SOLDIER_EGG_EARTH,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://soldierEgg/earth',
           [],
           [],
         );
         // COMMANDERS
         await token.addResourceEntry(
-          {
-            id: RES_ID_COMMANDER_EGG_WATER,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://commanderEgg/water',
-          },
+          RES_ID_COMMANDER_EGG_WATER,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://commanderEgg/water',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_COMMANDER_EGG_FIRE,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://commanderEgg/fire',
-          },
+          RES_ID_COMMANDER_EGG_FIRE,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://commanderEgg/fire',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_COMMANDER_EGG_AIR,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://commanderEgg/air',
-          },
+          RES_ID_COMMANDER_EGG_AIR,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://commanderEgg/air',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_COMMANDER_EGG_EARTH,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://commanderEgg/earth',
-          },
+          RES_ID_COMMANDER_EGG_EARTH,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://commanderEgg/earth',
           [],
           [],
         );
         // GENERALS
         await token.addResourceEntry(
-          {
-            id: RES_ID_GENERAL_EGG_FIRE,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://generalEgg/fire',
-          },
+          RES_ID_GENERAL_EGG_FIRE,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://generalEgg/fire',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_GENERAL_EGG_WATER,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://generalEgg/water',
-          },
+          RES_ID_GENERAL_EGG_WATER,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://generalEgg/water',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_GENERAL_EGG_AIR,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://generalEgg/air',
-          },
+          RES_ID_GENERAL_EGG_AIR,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://generalEgg/air',
           [],
           [],
         );
         await token.addResourceEntry(
-          {
-            id: RES_ID_GENERAL_EGG_EARTH,
-            equippableGroupId: bn(0),
-            baseAddress: ethers.constants.AddressZero,
-            metadataURI: 'ipfs://generalEgg/earth',
-          },
+          RES_ID_GENERAL_EGG_EARTH,
+          bn(0),
+          ethers.constants.AddressZero,
+          'ipfs://generalEgg/earth',
           [],
           [],
         );
+      }
+
+      async function addElementEggsToTokens() {
+        await token.addResourceToTokens([201, 202], RES_ID_SOLDIER_EGG_FIRE, RES_ID_SOLDIER_EGG);
+        await token.addResourceToTokens([203, 204], RES_ID_SOLDIER_EGG_WATER, RES_ID_SOLDIER_EGG);
+        await token.addResourceToTokens([21], RES_ID_COMMANDER_EGG_EARTH, RES_ID_COMMANDER_EGG);
+        await token.addResourceToTokens([22], RES_ID_COMMANDER_EGG_AIR, RES_ID_COMMANDER_EGG);
+        await token.addResourceToTokens([1], RES_ID_GENERAL_EGG_FIRE, RES_ID_GENERAL_EGG);
+
+        await token.connect(buyer).acceptResource(201, 0, RES_ID_SOLDIER_EGG_FIRE);
+        await token.connect(buyer).acceptResource(202, 0, RES_ID_SOLDIER_EGG_FIRE);
+        await token.connect(buyer).acceptResource(203, 0, RES_ID_SOLDIER_EGG_WATER);
+        await token.connect(buyer).acceptResource(204, 0, RES_ID_SOLDIER_EGG_WATER);
+        await token.connect(buyer).acceptResource(21, 0, RES_ID_COMMANDER_EGG_EARTH);
+        await token.connect(buyer).acceptResource(22, 0, RES_ID_COMMANDER_EGG_AIR);
+        await token.connect(buyer).acceptResource(1, 0, RES_ID_GENERAL_EGG_FIRE);
       }
     });
   });

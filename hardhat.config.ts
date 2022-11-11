@@ -1,10 +1,10 @@
 import { HardhatUserConfig } from 'hardhat/config';
-import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-chai-matchers';
+import '@nomicfoundation/hardhat-toolbox';
 import '@typechain/hardhat';
+import 'hardhat-contract-sizer';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
-import 'hardhat-contract-sizer';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -16,15 +16,14 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  gasReporter: {
+    enabled: true,
+    currency: 'USD',
+    coinmarketcap: process.env.COIN_MARKET_CAP_KEY || '',
+    token: 'GLMR',
+    gasPriceApi: 'https://api-moonbeam.moonscan.io/api?module=proxy&action=eth_gasPrice',
+  },
   networks: {
-    ropsten: {
-      url: process.env.ROPSTEN_URL || '',
-      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    goerli: {
-      url: process.env.GOERLI_URL || '',
-      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
     moonbaseAlpha: {
       url: 'https://rpc.testnet.moonbeam.network',
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
@@ -34,12 +33,17 @@ const config: HardhatUserConfig = {
       chainId: 1285, // (hex: 0x505),
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    moonbeam: {
+      url: 'https://rpc.api.moonbeam.network',
+      chainId: 1284, // (hex: 0x504),
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   etherscan: {
     apiKey: {
       moonriver: process.env.MOONRIVER_MOONSCAN_APIKEY || '', // Moonriver Moonscan API Key
+      moonbeam: process.env.MOONBEAM_MOONSCAN_APIKEY || '', // Moonbeam Moonscan API Key
       moonbaseAlpha: process.env.MOONBEAM_MOONSCAN_APIKEY || '', // Moonbeam Moonscan API Key
-      goerli: process.env.ETHERSCAN_API_KEY || '', // Goerli Etherscan API Key
     },
   },
 };
