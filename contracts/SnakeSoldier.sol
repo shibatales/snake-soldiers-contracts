@@ -8,7 +8,7 @@ import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
 // Imported so it's included on typechain. We'll need it to display NFTs NFTs
-import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKEquipRenderUtils.sol";
+import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKMultiResourceRenderUtils.sol";
 
 error MaxGiftsPerPhaseReached();
 error MaxPhaseReached();
@@ -97,7 +97,11 @@ contract SnakeSoldier is
         _maxGiftsPerPhase = maxGiftsPerPhase_;
     }
 
-    function mint(address to, uint256 numToMint, Rank rank) external payable {
+    function mint(
+        address to,
+        uint256 numToMint,
+        Rank rank
+    ) external payable {
         _mintChecks(numToMint, rank);
 
         uint256 mintPriceRequired = numToMint * pricePerMint(rank);
@@ -123,7 +127,11 @@ contract SnakeSoldier is
             revert MintOverMax();
     }
 
-    function _innerMint(address to, uint256 numToMint, Rank rank) private {
+    function _innerMint(
+        address to,
+        uint256 numToMint,
+        Rank rank
+    ) private {
         uint256 nextToken = _totalSupply[rank] + 1 + _rankOffset(rank);
         unchecked {
             _totalSupply[rank] += numToMint;
@@ -234,9 +242,11 @@ contract SnakeSoldier is
         else return _pricePerGeneral;
     }
 
-    function updateRoyaltyRecipient(
-        address newRoyaltyRecipient
-    ) external override onlyOwner {
+    function updateRoyaltyRecipient(address newRoyaltyRecipient)
+        external
+        override
+        onlyOwner
+    {
         _setRoyaltyRecipient(newRoyaltyRecipient);
     }
 
@@ -278,10 +288,7 @@ contract SnakeSoldier is
         return _defaultTokenUri;
     }
 
-    function getResourceMetadata(
-        uint256 tokenId,
-        uint64 resourceId
-    )
+    function getResourceMetadata(uint256 tokenId, uint64 resourceId)
         public
         view
         override(AbstractMultiResource, IRMRKMultiResource)
@@ -293,19 +300,20 @@ contract SnakeSoldier is
         return metaUri;
     }
 
-    function setResourceEnumerated(
-        uint64 resourceId,
-        bool enumerated
-    ) external onlyOwner {
+    function setResourceEnumerated(uint64 resourceId, bool enumerated)
+        external
+        onlyOwner
+    {
         if (enumerated) _isTokenResourceEnumerated[resourceId] = 1;
         else delete _isTokenResourceEnumerated[resourceId];
     }
 
     // This is not ideal but we add it since we had no time for an indexer.
-    function getTokensAndOwners(
-        uint256 initId,
-        uint256 size
-    ) external view returns (uint256[] memory, address[] memory) {
+    function getTokensAndOwners(uint256 initId, uint256 size)
+        external
+        view
+        returns (uint256[] memory, address[] memory)
+    {
         uint256 lastId = initId + size - 1;
         uint256 totalSupply_ = totalSupply();
         if (lastId > totalSupply_) {
@@ -326,9 +334,10 @@ contract SnakeSoldier is
         return (ids, owners);
     }
 
-    function revealElement(
-        uint256 tokenId
-    ) external onlyApprovedForResourcesOrOwner(tokenId) {
+    function revealElement(uint256 tokenId)
+        external
+        onlyApprovedForResourcesOrOwner(tokenId)
+    {
         if (_elementRevealed[tokenId] == 1) revert ElementAlreadyRevealed();
         _elementRevealed[tokenId] = 1;
         uint64 newResourceId;
