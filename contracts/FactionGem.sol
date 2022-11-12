@@ -199,8 +199,10 @@ contract FactionGem is
         uint256 tokenId
     ) internal virtual override(RMRKCore, RMRKSoulbound) {
         super._beforeTokenTransfer(from, to, tokenId);
-        address owner = ownerOf(tokenId);
-        ISerpenterraPassport(_passportAddress).burnFromFactionGem(owner, 1);
+        if(from != address(0) && to != address(0)) {
+            address owner = ownerOf(tokenId);
+            ISerpenterraPassport(_passportAddress).burnFromFactionGem(owner, 1);
+        }
     }
 
     // Factions are assigned round robing style, it's an easy way to make sure
