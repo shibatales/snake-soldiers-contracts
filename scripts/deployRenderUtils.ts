@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { RMRKEquipRenderUtils } from '../typechain-types';
+import { RMRKMultiResourceRenderUtils } from '../typechain-types';
 
 async function main() {
   const renderUtilsFactory = await ethers.getContractFactory('RMRKMultiResourceRenderUtils');

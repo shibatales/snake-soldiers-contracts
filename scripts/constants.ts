@@ -12,12 +12,12 @@ function bn(num: number): BigNumber {
 }
 
 async function sleep(seconds: number) {
-  if (IS_PROD) await new Promise((f) => setTimeout(f, seconds * 1000));
+  await new Promise((f) => setTimeout(f, seconds * 1000));
 }
 
-let SOLDIER_PRICE = ethers.utils.parseEther('2.0');
-let COMMANDER_PRICE = ethers.utils.parseEther('25.0');
-let GENERAL_PRICE = ethers.utils.parseEther('200.0');
+let SOLDIER_PRICE = ethers.utils.parseEther('4.0');
+let COMMANDER_PRICE = ethers.utils.parseEther('40.0');
+let GENERAL_PRICE = ethers.utils.parseEther('400.0');
 
 if (!IS_PROD) {
   SOLDIER_PRICE = SOLDIER_PRICE.div(100);
@@ -50,7 +50,7 @@ const RES_ID_SNAKE = bn(16);
 const GEM_MAIN_RESOURCE_ID = bn(1);
 const GEM_EQUIP_RESOURCE_ID = bn(2);
 
-const IPFS_BASE = 'ipfs://';
+const IPFS_BASE = 'ipfs://test/';
 
 export {
   bn,
