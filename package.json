@@ -8,7 +8,7 @@
     "prettier": "prettier --write ."
   },
   "keywords": [],
-  "author": "@rmrk-team",
+  "author": "@stoicdev0",
   "license": "Apache-2.0",
   "dependencies": {
     "@rmrk-team/evm-contracts": "^0.15.0"
