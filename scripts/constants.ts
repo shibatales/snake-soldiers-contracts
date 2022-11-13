@@ -50,7 +50,7 @@ const RES_ID_SNAKE = bn(16);
 const GEM_MAIN_RESOURCE_ID = bn(1);
 const GEM_EQUIP_RESOURCE_ID = bn(2);
 
-const IPFS_BASE = 'ipfs://test/';
+const IPFS_BASE = 'ipfs://Qmd9cmxr5hjL67kFKBAkLyLEYcg1SMEDmoyjDPufzL2yFR';
 
 export {
   bn,
