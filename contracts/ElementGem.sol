@@ -24,8 +24,8 @@ contract ElementGem is
     uint256 private _totalSupply;
     uint256 private immutable _maxSupply;
 
-    uint64 private constant _MAIN_RESOURCE_ID = uint64(1);
-    // uint64 private constant _EQUIP_RESOURCE_ID = uint64(2);
+    uint64 private constant _MAIN_ASSET_ID = uint64(1);
+    // uint64 private constant _EQUIP_ASSET_ID = uint64(2);
 
     string private constant _POST_URL_PER_TYPE_FIRE = "fire";
     string private constant _POST_URL_PER_TYPE_EARTH = "earth";
@@ -98,42 +98,40 @@ contract ElementGem is
         _claimed[snakeTokenId] = 1;
         _totalSupply += 1;
 
-        address owner = IRMRKNesting(_snakeSoldiers).ownerOf(snakeTokenId);
+        address owner = IRMRKNestable(_snakeSoldiers).ownerOf(snakeTokenId);
         if (_msgSender() != owner) revert CannotMintGemForNotOwnedToken();
-        _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId);
-        _addResourceToToken(snakeTokenId, _MAIN_RESOURCE_ID, uint64(0));
-        _acceptResource(snakeTokenId, 0, _MAIN_RESOURCE_ID);
-        // This resource is not yet ready
-        // _addResourceToToken(snakeTokenId, _EQUIP_RESOURCE_ID, uint64(0));
-        // _acceptResource(snakeTokenId, 0, _EQUIP_RESOURCE_ID);
+        _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId, "");
+        _addAssetToToken(snakeTokenId, _MAIN_ASSET_ID, uint64(0));
+        _acceptAsset(snakeTokenId, 0, _MAIN_ASSET_ID);
+        // This asset is not yet ready
+        // _addAssetToToken(snakeTokenId, _EQUIP_ASSET_ID, uint64(0));
+        // _acceptAsset(snakeTokenId, 0, _EQUIP_ASSET_ID);
     }
 
-    function addResourceEntry(
+    function addAssetEntry(
         uint64 id,
         uint64 equippableGroupId,
         address baseAddress,
         string memory metadataURI,
-        uint64[] memory fixedPartIds,
-        uint64[] memory slotPartIds
+        uint64[] calldata partIds
     ) external onlyOwnerOrContributor {
-        _addResourceEntry(
+        _addAssetEntry(
             id,
             equippableGroupId,
             baseAddress,
             metadataURI,
-            fixedPartIds,
-            slotPartIds
+            partIds
         );
     }
 
-    function addResourceToTokens(
+    function addAssetToTokens(
         uint256[] calldata tokenIds,
-        uint64 resourceId,
+        uint64 assetId,
         uint64 overwrites
     ) external onlyOwnerOrContributor {
         uint256 length = tokenIds.length;
         for (uint256 i; i < length; ) {
-            _addResourceToToken(tokenIds[i], resourceId, overwrites);
+            _addAssetToToken(tokenIds[i], assetId, overwrites);
             unchecked {
                 ++i;
             }
@@ -175,16 +173,16 @@ contract ElementGem is
         return _tokenURI;
     }
 
-    function getResourceMetadata(
+    function getAssetMetadata(
         uint256 tokenId,
-        uint64 resourceId
+        uint64 assetId
     )
         public
         view
-        override(AbstractMultiResource, IRMRKMultiResource)
+        override(AbstractMultiAsset, IRMRKMultiAsset)
         returns (string memory)
     {
-        string memory metaUri = super.getResourceMetadata(tokenId, resourceId);
+        string memory metaUri = super.getAssetMetadata(tokenId, assetId);
         string memory postUri = _postUriFor(tokenId);
         return string(abi.encodePacked(metaUri, postUri));
     }

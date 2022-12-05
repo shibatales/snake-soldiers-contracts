@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 import { SnakeSoldier, ElementGem, FactionGem, SerpenterraPassport } from '../typechain-types';
-import { IPFS_BASE, GEM_MAIN_RESOURCE_ID } from './constants'
+import { IPFS_BASE, GEM_MAIN_ASSET_ID } from './constants'
 
 async function main() {
   // const snakeSoldierFactory = await ethers.getContractFactory('SnakeSoldier');
@@ -24,8 +24,8 @@ async function main() {
     '0x99afBc47A0363F25b4E6deE575a0c367E4419394',
   );
   await factionGem.deployed();
-  await factionGem.addResourceEntry(
-    GEM_MAIN_RESOURCE_ID,
+  await factionGem.addAssetEntry(
+    GEM_MAIN_ASSET_ID,
     0,
     ethers.constants.AddressZero,
     `${IPFS_BASE}/gems/factions/`,

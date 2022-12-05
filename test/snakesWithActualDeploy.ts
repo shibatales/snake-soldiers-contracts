@@ -28,7 +28,7 @@ import {
   FactionGem,
   SkillGem,
   SerpenterraPassport,
-  RMRKMultiResourceRenderUtils,
+  RMRKMultiAssetRenderUtils,
 } from '../typechain-types';
 import { deployAndSetupGems, deployAndSetupSnakes } from '../scripts/deployAndSetup';
 
@@ -42,14 +42,14 @@ async function fullFixture(): Promise<{
   factionGem: FactionGem;
   skillGem: SkillGem;
   passport: SerpenterraPassport;
-  renderUtils: RMRKMultiResourceRenderUtils;
+  renderUtils: RMRKMultiAssetRenderUtils;
 }> {
   const snakeSoldiers = await deployAndSetupSnakes();
   const { elementGem, factionGem, skillGem, passport } = await deployAndSetupGems(
     snakeSoldiers.address,
   );
-  const renderUtilsFactory = await ethers.getContractFactory('RMRKMultiResourceRenderUtils');
-  const renderUtils: RMRKMultiResourceRenderUtils = await renderUtilsFactory.deploy();
+  const renderUtilsFactory = await ethers.getContractFactory('RMRKMultiAssetRenderUtils');
+  const renderUtils: RMRKMultiAssetRenderUtils = await renderUtilsFactory.deploy();
   return { snakeSoldiers, elementGem, factionGem, skillGem, passport, renderUtils };
 }
 
@@ -59,7 +59,7 @@ describe('SnakeSoldiers', async () => {
   let factionGem: FactionGem;
   let skillGem: SkillGem;
   let passport: SerpenterraPassport;
-  let renderUtils: RMRKMultiResourceRenderUtils;
+  let renderUtils: RMRKMultiAssetRenderUtils;
   let owner: SignerWithAddress;
   let buyer: SignerWithAddress;
   let buyer2: SignerWithAddress;
@@ -106,41 +106,41 @@ describe('SnakeSoldiers', async () => {
 
   it('can reveal egg', async function () {
     // Generals
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 1)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 1)).to.eql([
       [RES_ID_GENERAL_EGG, 0, `${IPFS_BASE}/eggs/general/generic`]
     ]);
     await snakeSoldiers.connect(buyer).revealElement(1);
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 1)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 1)).to.eql([
       [RES_ID_GENERAL_EGG_EARTH, 0, `${IPFS_BASE}/eggs/general/earth`]
     ]);
 
     // Commanders
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 21)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 21)).to.eql([
       [RES_ID_COMMANDER_EGG, 0, `${IPFS_BASE}/eggs/commander/generic`]
     ]);
     await snakeSoldiers.connect(buyer).revealElement(21);
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 21)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 21)).to.eql([
       [RES_ID_COMMANDER_EGG_EARTH, 0, `${IPFS_BASE}/eggs/commander/earth`]
     ]);
 
     // Soldiers
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 201)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 201)).to.eql([
       [RES_ID_SOLDIER_EGG, 0, `${IPFS_BASE}/eggs/soldier/generic`]
     ]);
     await snakeSoldiers.connect(buyer).revealElement(201);
     await snakeSoldiers.connect(buyer).revealElement(202);
     await snakeSoldiers.connect(buyer).revealElement(203);
     await snakeSoldiers.connect(buyer).revealElement(204);
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 201)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 201)).to.eql([
       [RES_ID_SOLDIER_EGG_EARTH, 0, `${IPFS_BASE}/eggs/soldier/earth`]
     ]);
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 202)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 202)).to.eql([
       [RES_ID_SOLDIER_EGG_WATER, 0, `${IPFS_BASE}/eggs/soldier/water`]
     ]);
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 203)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 203)).to.eql([
       [RES_ID_SOLDIER_EGG_AIR, 0, `${IPFS_BASE}/eggs/soldier/air`]
     ]);
-    expect(await renderUtils.getActiveResources(snakeSoldiers.address, 204)).to.eql([
+    expect(await renderUtils.getActiveAssets(snakeSoldiers.address, 204)).to.eql([
       [RES_ID_SOLDIER_EGG_FIRE, 0, `${IPFS_BASE}/eggs/soldier/fire`]
     ]);
   });

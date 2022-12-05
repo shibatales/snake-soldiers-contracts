@@ -8,7 +8,7 @@ import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
 // Imported so it's included on typechain. We'll need it to display NFTs NFTs
-import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKMultiResourceRenderUtils.sol";
+import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKMultiAssetRenderUtils.sol";
 
 error MaxGiftsPerPhaseReached();
 error MaxPhaseReached();
@@ -51,7 +51,7 @@ contract SnakeSoldier is
     uint256 private _pricePerGeneral;
 
     string private _defaultTokenUri;
-    mapping(uint64 => uint256) private _isTokenResourceEnumerated;
+    mapping(uint64 => uint256) private _isTokenAssetEnumerated;
 
     uint256 private constant _MAX_SUPPLY_PER_PHASE_SOLDIERS = 1200; // A maximum possible of 1200*4=4800
     uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
@@ -129,19 +129,19 @@ contract SnakeSoldier is
             _totalSupply[rank] += numToMint;
         }
         uint256 totalSupplyOffset = nextToken + numToMint;
-        uint64 resourceId;
+        uint64 assetId;
 
         for (uint256 i = nextToken; i < totalSupplyOffset; ) {
-            _safeMint(to, i);
+            _safeMint(to, i, "");
             if (i > _SOLDIERS_OFFSET) {
-                resourceId = _RES_ID_SOLDIER_EGG;
+                assetId = _RES_ID_SOLDIER_EGG;
             } else if (i > _COMMANDERS_OFFSET) {
-                resourceId = _RES_ID_COMMANDER_EGG;
+                assetId = _RES_ID_COMMANDER_EGG;
             } else {
-                resourceId = _RES_ID_GENERAL_EGG;
+                assetId = _RES_ID_GENERAL_EGG;
             }
-            _addResourceToToken(i, resourceId, 0);
-            _acceptResource(i, 0, resourceId);
+            _addAssetToToken(i, assetId, 0);
+            _acceptAsset(i, 0, assetId);
             unchecked {
                 ++i;
             }
@@ -150,32 +150,30 @@ contract SnakeSoldier is
         emit Minted(rank, to, nextToken, totalSupplyOffset - 1);
     }
 
-    function addResourceEntry(
+    function addAssetEntry(
         uint64 id,
         uint64 equippableGroupId,
         address baseAddress,
         string memory metadataURI,
-        uint64[] memory fixedPartIds,
-        uint64[] memory slotPartIds
+        uint64[] calldata partIds
     ) external onlyOwnerOrContributor {
-        _addResourceEntry(
+        _addAssetEntry(
             id,
             equippableGroupId,
             baseAddress,
             metadataURI,
-            fixedPartIds,
-            slotPartIds
+            partIds
         );
     }
 
-    function addResourceToTokens(
+    function addAssetToTokens(
         uint256[] calldata tokenIds,
-        uint64 resourceId,
+        uint64 assetId,
         uint64 overwrites
     ) external onlyOwnerOrContributor {
         uint256 length = tokenIds.length;
         for (uint256 i; i < length; ) {
-            _addResourceToToken(tokenIds[i], resourceId, overwrites);
+            _addAssetToToken(tokenIds[i], assetId, overwrites);
             unchecked {
                 ++i;
             }
@@ -278,27 +276,27 @@ contract SnakeSoldier is
         return _defaultTokenUri;
     }
 
-    function getResourceMetadata(
+    function getAssetMetadata(
         uint256 tokenId,
-        uint64 resourceId
+        uint64 assetId
     )
         public
         view
-        override(AbstractMultiResource, IRMRKMultiResource)
+        override(AbstractMultiAsset, IRMRKMultiAsset)
         returns (string memory)
     {
-        string memory metaUri = super.getResourceMetadata(tokenId, resourceId);
-        if (_isTokenResourceEnumerated[resourceId] != 0)
+        string memory metaUri = super.getAssetMetadata(tokenId, assetId);
+        if (_isTokenAssetEnumerated[assetId] != 0)
             metaUri = string(abi.encodePacked(metaUri, tokenId.toString()));
         return metaUri;
     }
 
-    function setResourceEnumerated(
-        uint64 resourceId,
+    function setAssetEnumerated(
+        uint64 assetId,
         bool enumerated
     ) external onlyOwner {
-        if (enumerated) _isTokenResourceEnumerated[resourceId] = 1;
-        else delete _isTokenResourceEnumerated[resourceId];
+        if (enumerated) _isTokenAssetEnumerated[assetId] = 1;
+        else delete _isTokenAssetEnumerated[assetId];
     }
 
     // This is not ideal but we temporarily add it since we had no time for an indexer.
@@ -325,24 +323,24 @@ contract SnakeSoldier is
 
     function revealElement(
         uint256 tokenId
-    ) external onlyApprovedForResourcesOrOwner(tokenId) {
+    ) external onlyApprovedForAssetsOrOwner(tokenId) {
         if (_elementRevealed[tokenId] == 1) revert ElementAlreadyRevealed();
         _elementRevealed[tokenId] = 1;
-        uint64 newResourceId;
-        uint64 oldResourceId;
+        uint64 newAssetId;
+        uint64 oldAssetId;
 
-        // The "+ tokenId % 4" part, sets the resource for the right element
+        // The "+ tokenId % 4" part, sets the asset for the right element
         if (tokenId > _SOLDIERS_OFFSET) {
-            oldResourceId = _RES_ID_SOLDIER_EGG;
-            newResourceId = _RES_ID_SOLDIER_EGG_FIRE + uint64(tokenId % 4);
+            oldAssetId = _RES_ID_SOLDIER_EGG;
+            newAssetId = _RES_ID_SOLDIER_EGG_FIRE + uint64(tokenId % 4);
         } else if (tokenId > _COMMANDERS_OFFSET) {
-            oldResourceId = _RES_ID_COMMANDER_EGG;
-            newResourceId = _RES_ID_COMMANDER_EGG_FIRE + uint64(tokenId % 4);
+            oldAssetId = _RES_ID_COMMANDER_EGG;
+            newAssetId = _RES_ID_COMMANDER_EGG_FIRE + uint64(tokenId % 4);
         } else {
-            oldResourceId = _RES_ID_GENERAL_EGG;
-            newResourceId = _RES_ID_GENERAL_EGG_FIRE + uint64(tokenId % 4);
+            oldAssetId = _RES_ID_GENERAL_EGG;
+            newAssetId = _RES_ID_GENERAL_EGG_FIRE + uint64(tokenId % 4);
         }
-        _addResourceToToken(tokenId, newResourceId, oldResourceId);
-        _acceptResource(tokenId, 0, newResourceId);
+        _addAssetToToken(tokenId, newAssetId, oldAssetId);
+        _acceptAsset(tokenId, 0, newAssetId);
     }
 }

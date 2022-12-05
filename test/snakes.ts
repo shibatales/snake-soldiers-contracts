@@ -40,7 +40,7 @@ async function snakesFixture(): Promise<Contract> {
   // @ts-ignore
   const token = await factory.deploy(META_URI, DEFAULT_TOKEN_URI, MAX_GIFTS_PER_PHASE);
   await token.deployed();
-  await token.addResourceEntry(
+  await token.addAssetEntry(
     RES_ID_SOLDIER_EGG,
     0,
     ethers.constants.AddressZero,
@@ -48,7 +48,7 @@ async function snakesFixture(): Promise<Contract> {
     [],
     [],
   );
-  await token.addResourceEntry(
+  await token.addAssetEntry(
     RES_ID_COMMANDER_EGG,
     0,
     ethers.constants.AddressZero,
@@ -56,7 +56,7 @@ async function snakesFixture(): Promise<Contract> {
     [],
     [],
   );
-  await token.addResourceEntry(
+  await token.addAssetEntry(
     RES_ID_GENERAL_EGG,
     0,
     ethers.constants.AddressZero,
@@ -264,52 +264,52 @@ describe('SnakeSoldiers', async () => {
       expect(await token.tokenURI(1)).to.eql(DEFAULT_TOKEN_URI);
     });
 
-    describe('With resources added', async function () {
-      it('can get resource meta for tokens on each rank', async function () {
-        expect(await token.getResourceMetadata(201, RES_ID_SOLDIER_EGG)).to.eql(
+    describe('With assets added', async function () {
+      it('can get asset meta for tokens on each rank', async function () {
+        expect(await token.getAssetMetadata(201, RES_ID_SOLDIER_EGG)).to.eql(
           'ipfs://soldierEgg',
         );
-        expect(await token.getResourceMetadata(202, RES_ID_SOLDIER_EGG)).to.eql(
+        expect(await token.getAssetMetadata(202, RES_ID_SOLDIER_EGG)).to.eql(
           'ipfs://soldierEgg',
         );
-        expect(await token.getResourceMetadata(21, RES_ID_COMMANDER_EGG)).to.eql(
+        expect(await token.getAssetMetadata(21, RES_ID_COMMANDER_EGG)).to.eql(
           'ipfs://commanderEgg',
         );
-        expect(await token.getResourceMetadata(22, RES_ID_COMMANDER_EGG)).to.eql(
+        expect(await token.getAssetMetadata(22, RES_ID_COMMANDER_EGG)).to.eql(
           'ipfs://commanderEgg',
         );
-        expect(await token.getResourceMetadata(1, RES_ID_GENERAL_EGG)).to.eql('ipfs://generalEgg');
+        expect(await token.getAssetMetadata(1, RES_ID_GENERAL_EGG)).to.eql('ipfs://generalEgg');
       });
 
       it('can replace basic eggs for element eggs', async function () {
-        await addElementEggsResources();
+        await addElementEggsAssets();
         await addElementEggsToTokens();
 
-        expect(await token.getResourceMetadata(201, RES_ID_SOLDIER_EGG_FIRE)).to.eql(
+        expect(await token.getAssetMetadata(201, RES_ID_SOLDIER_EGG_FIRE)).to.eql(
           'ipfs://soldierEgg/fire',
         );
-        expect(await token.getResourceMetadata(203, RES_ID_SOLDIER_EGG_WATER)).to.eql(
+        expect(await token.getAssetMetadata(203, RES_ID_SOLDIER_EGG_WATER)).to.eql(
           'ipfs://soldierEgg/water',
         );
-        expect(await token.getResourceMetadata(21, RES_ID_COMMANDER_EGG_EARTH)).to.eql(
+        expect(await token.getAssetMetadata(21, RES_ID_COMMANDER_EGG_EARTH)).to.eql(
           'ipfs://commanderEgg/earth',
         );
-        expect(await token.getResourceMetadata(22, RES_ID_COMMANDER_EGG_AIR)).to.eql(
+        expect(await token.getAssetMetadata(22, RES_ID_COMMANDER_EGG_AIR)).to.eql(
           'ipfs://commanderEgg/air',
         );
-        expect(await token.getResourceMetadata(1, RES_ID_GENERAL_EGG_FIRE)).to.eql(
+        expect(await token.getAssetMetadata(1, RES_ID_GENERAL_EGG_FIRE)).to.eql(
           'ipfs://generalEgg/fire',
         );
       });
 
-      it('can replace element eggs for snake resources', async function () {
+      it('can replace element eggs for snake assets', async function () {
         // We replace basic eggs for element eggs first.
-        await addElementEggsResources();
+        await addElementEggsAssets();
         await addElementEggsToTokens();
 
-        // Now replace for enumerated soldier resources
+        // Now replace for enumerated soldier assets
 
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_SNAKE,
           bn(0),
           ethers.constants.AddressZero,
@@ -317,28 +317,28 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.setResourceEnumerated(RES_ID_SNAKE, true);
-        await token.addResourceToTokens([201, 202], RES_ID_SNAKE, RES_ID_SOLDIER_EGG_FIRE);
-        await token.addResourceToTokens([203, 204], RES_ID_SNAKE, RES_ID_SOLDIER_EGG_WATER);
-        await token.addResourceToTokens([21], RES_ID_SNAKE, RES_ID_COMMANDER_EGG_EARTH);
-        await token.addResourceToTokens([22], RES_ID_SNAKE, RES_ID_COMMANDER_EGG_AIR);
-        await token.addResourceToTokens([1], RES_ID_SNAKE, RES_ID_GENERAL_EGG_FIRE);
+        await token.setAssetEnumerated(RES_ID_SNAKE, true);
+        await token.addAssetToTokens([201, 202], RES_ID_SNAKE, RES_ID_SOLDIER_EGG_FIRE);
+        await token.addAssetToTokens([203, 204], RES_ID_SNAKE, RES_ID_SOLDIER_EGG_WATER);
+        await token.addAssetToTokens([21], RES_ID_SNAKE, RES_ID_COMMANDER_EGG_EARTH);
+        await token.addAssetToTokens([22], RES_ID_SNAKE, RES_ID_COMMANDER_EGG_AIR);
+        await token.addAssetToTokens([1], RES_ID_SNAKE, RES_ID_GENERAL_EGG_FIRE);
 
         const tokenIds = [1, 21, 22, 201, 202, 203, 204];
         for (let i = 0; i < tokenIds.length; i++) {
-          await token.connect(buyer).acceptResource(tokenIds[i], 0, RES_ID_SNAKE);
+          await token.connect(buyer).acceptAsset(tokenIds[i], 0, RES_ID_SNAKE);
         }
 
-        expect(await token.getResourceMetadata(201, RES_ID_SNAKE)).to.eql('ipfs://soldier/201');
-        expect(await token.getResourceMetadata(203, RES_ID_SNAKE)).to.eql('ipfs://soldier/203');
-        expect(await token.getResourceMetadata(21, RES_ID_SNAKE)).to.eql('ipfs://soldier/21');
-        expect(await token.getResourceMetadata(22, RES_ID_SNAKE)).to.eql('ipfs://soldier/22');
-        expect(await token.getResourceMetadata(1, RES_ID_SNAKE)).to.eql('ipfs://soldier/1');
+        expect(await token.getAssetMetadata(201, RES_ID_SNAKE)).to.eql('ipfs://soldier/201');
+        expect(await token.getAssetMetadata(203, RES_ID_SNAKE)).to.eql('ipfs://soldier/203');
+        expect(await token.getAssetMetadata(21, RES_ID_SNAKE)).to.eql('ipfs://soldier/21');
+        expect(await token.getAssetMetadata(22, RES_ID_SNAKE)).to.eql('ipfs://soldier/22');
+        expect(await token.getAssetMetadata(1, RES_ID_SNAKE)).to.eql('ipfs://soldier/1');
       });
 
-      async function addElementEggsResources() {
+      async function addElementEggsAssets() {
         // SOLDIERS
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_SOLDIER_EGG_FIRE,
           bn(0),
           ethers.constants.AddressZero,
@@ -346,7 +346,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_SOLDIER_EGG_WATER,
           bn(0),
           ethers.constants.AddressZero,
@@ -354,7 +354,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_SOLDIER_EGG_AIR,
           bn(0),
           ethers.constants.AddressZero,
@@ -362,7 +362,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_SOLDIER_EGG_EARTH,
           bn(0),
           ethers.constants.AddressZero,
@@ -371,7 +371,7 @@ describe('SnakeSoldiers', async () => {
           [],
         );
         // COMMANDERS
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_COMMANDER_EGG_WATER,
           bn(0),
           ethers.constants.AddressZero,
@@ -379,7 +379,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_COMMANDER_EGG_FIRE,
           bn(0),
           ethers.constants.AddressZero,
@@ -387,7 +387,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_COMMANDER_EGG_AIR,
           bn(0),
           ethers.constants.AddressZero,
@@ -395,7 +395,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_COMMANDER_EGG_EARTH,
           bn(0),
           ethers.constants.AddressZero,
@@ -404,7 +404,7 @@ describe('SnakeSoldiers', async () => {
           [],
         );
         // GENERALS
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_GENERAL_EGG_FIRE,
           bn(0),
           ethers.constants.AddressZero,
@@ -412,7 +412,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_GENERAL_EGG_WATER,
           bn(0),
           ethers.constants.AddressZero,
@@ -420,7 +420,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_GENERAL_EGG_AIR,
           bn(0),
           ethers.constants.AddressZero,
@@ -428,7 +428,7 @@ describe('SnakeSoldiers', async () => {
           [],
           [],
         );
-        await token.addResourceEntry(
+        await token.addAssetEntry(
           RES_ID_GENERAL_EGG_EARTH,
           bn(0),
           ethers.constants.AddressZero,
@@ -439,19 +439,19 @@ describe('SnakeSoldiers', async () => {
       }
 
       async function addElementEggsToTokens() {
-        await token.addResourceToTokens([201, 202], RES_ID_SOLDIER_EGG_FIRE, RES_ID_SOLDIER_EGG);
-        await token.addResourceToTokens([203, 204], RES_ID_SOLDIER_EGG_WATER, RES_ID_SOLDIER_EGG);
-        await token.addResourceToTokens([21], RES_ID_COMMANDER_EGG_EARTH, RES_ID_COMMANDER_EGG);
-        await token.addResourceToTokens([22], RES_ID_COMMANDER_EGG_AIR, RES_ID_COMMANDER_EGG);
-        await token.addResourceToTokens([1], RES_ID_GENERAL_EGG_FIRE, RES_ID_GENERAL_EGG);
+        await token.addAssetToTokens([201, 202], RES_ID_SOLDIER_EGG_FIRE, RES_ID_SOLDIER_EGG);
+        await token.addAssetToTokens([203, 204], RES_ID_SOLDIER_EGG_WATER, RES_ID_SOLDIER_EGG);
+        await token.addAssetToTokens([21], RES_ID_COMMANDER_EGG_EARTH, RES_ID_COMMANDER_EGG);
+        await token.addAssetToTokens([22], RES_ID_COMMANDER_EGG_AIR, RES_ID_COMMANDER_EGG);
+        await token.addAssetToTokens([1], RES_ID_GENERAL_EGG_FIRE, RES_ID_GENERAL_EGG);
 
-        await token.connect(buyer).acceptResource(201, 0, RES_ID_SOLDIER_EGG_FIRE);
-        await token.connect(buyer).acceptResource(202, 0, RES_ID_SOLDIER_EGG_FIRE);
-        await token.connect(buyer).acceptResource(203, 0, RES_ID_SOLDIER_EGG_WATER);
-        await token.connect(buyer).acceptResource(204, 0, RES_ID_SOLDIER_EGG_WATER);
-        await token.connect(buyer).acceptResource(21, 0, RES_ID_COMMANDER_EGG_EARTH);
-        await token.connect(buyer).acceptResource(22, 0, RES_ID_COMMANDER_EGG_AIR);
-        await token.connect(buyer).acceptResource(1, 0, RES_ID_GENERAL_EGG_FIRE);
+        await token.connect(buyer).acceptAsset(201, 0, RES_ID_SOLDIER_EGG_FIRE);
+        await token.connect(buyer).acceptAsset(202, 0, RES_ID_SOLDIER_EGG_FIRE);
+        await token.connect(buyer).acceptAsset(203, 0, RES_ID_SOLDIER_EGG_WATER);
+        await token.connect(buyer).acceptAsset(204, 0, RES_ID_SOLDIER_EGG_WATER);
+        await token.connect(buyer).acceptAsset(21, 0, RES_ID_COMMANDER_EGG_EARTH);
+        await token.connect(buyer).acceptAsset(22, 0, RES_ID_COMMANDER_EGG_AIR);
+        await token.connect(buyer).acceptAsset(1, 0, RES_ID_GENERAL_EGG_FIRE);
       }
     });
   });
