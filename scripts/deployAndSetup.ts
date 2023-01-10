@@ -48,7 +48,7 @@ async function deployAndSetupGems(
   const passport = await passportFactory.deploy();
   await passport.deployed();
   console.log('Passport deployed');
-  // await sleep(12);
+  await sleep(12);
 
   const elementGem = await elementGemFactory.deploy(
     `${IPFS_BASE}/gems/elements/collectionMeta`,
@@ -63,10 +63,9 @@ async function deployAndSetupGems(
     ethers.constants.AddressZero,
     `${IPFS_BASE}/gems/elements/`,
     [],
-    [],
   );
   console.log('Element gems deployed and configured');
-  // await sleep(12);
+  await sleep(12);
 
   const factionGem = await factionGemFactory.deploy(
     `${IPFS_BASE}/gems/factions/collectionMeta`,
@@ -82,12 +81,11 @@ async function deployAndSetupGems(
     ethers.constants.AddressZero,
     `${IPFS_BASE}/gems/factions/`,
     [],
-    [],
   );
   // So faction gem can burn passport on use
   passport.updateFactionGem(factionGem.address);
   console.log('Faction gems deployed and configured');
-  // await sleep(12);
+  await sleep(12);
 
   const skillGem = await skillGemFactory.deploy(
     `${IPFS_BASE}/gems/skills/collectionMeta`,
@@ -102,11 +100,10 @@ async function deployAndSetupGems(
     ethers.constants.AddressZero,
     `${IPFS_BASE}/gems/skills/`,
     [],
-    [],
   );
 
   console.log('Skill gems deployed and configured');
-  // await sleep(12);
+  await sleep(12);
 
   return { elementGem, factionGem, skillGem, passport };
 }
@@ -116,16 +113,15 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
   const snakeSoldier = await snakeSoldierFactory.deploy(
     `${IPFS_BASE}/soldiers/collectionMetadata`,
     `${IPFS_BASE}/soldiers/unrevealed`,
-    20,
+    10,
   );
   await snakeSoldier.deployed();
-  // await sleep(12);
+  await sleep(12);
   await snakeSoldier.addAssetEntry(
     RES_ID_SOLDIER_EGG,
     0,
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/soldier/generic`,
-    [],
     [],
   );
   await snakeSoldier.addAssetEntry(
@@ -134,7 +130,6 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/commander/generic`,
     [],
-    [],
   );
   await snakeSoldier.addAssetEntry(
     RES_ID_GENERAL_EGG,
@@ -142,15 +137,13 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/general/generic`,
     [],
-    [],
   );
-  // await sleep(12);
+  await sleep(12);
   await snakeSoldier.addAssetEntry(
     RES_ID_SOLDIER_EGG_FIRE,
     0,
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/soldier/fire`,
-    [],
     [],
   );
   await snakeSoldier.addAssetEntry(
@@ -159,7 +152,6 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/soldier/earth`,
     [],
-    [],
   );
   await snakeSoldier.addAssetEntry(
     RES_ID_SOLDIER_EGG_WATER,
@@ -167,15 +159,13 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/soldier/water`,
     [],
-    [],
   );
-  // await sleep(12);
+  await sleep(12);
   await snakeSoldier.addAssetEntry(
     RES_ID_SOLDIER_EGG_AIR,
     0,
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/soldier/air`,
-    [],
     [],
   );
   await snakeSoldier.addAssetEntry(
@@ -184,7 +174,6 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/commander/fire`,
     [],
-    [],
   );
   await snakeSoldier.addAssetEntry(
     RES_ID_COMMANDER_EGG_EARTH,
@@ -192,15 +181,13 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/commander/earth`,
     [],
-    [],
   );
-  // await sleep(12);
+  await sleep(12);
   await snakeSoldier.addAssetEntry(
     RES_ID_COMMANDER_EGG_WATER,
     0,
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/commander/water`,
-    [],
     [],
   );
   await snakeSoldier.addAssetEntry(
@@ -209,7 +196,6 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/commander/air`,
     [],
-    [],
   );
   await snakeSoldier.addAssetEntry(
     RES_ID_GENERAL_EGG_FIRE,
@@ -217,15 +203,13 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/general/fire`,
     [],
-    [],
   );
-  // await sleep(12);
+  await sleep(12);
   await snakeSoldier.addAssetEntry(
     RES_ID_GENERAL_EGG_EARTH,
     0,
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/general/earth`,
-    [],
     [],
   );
   await snakeSoldier.addAssetEntry(
@@ -234,7 +218,6 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/general/water`,
     [],
-    [],
   );
   await snakeSoldier.addAssetEntry(
     RES_ID_GENERAL_EGG_AIR,
@@ -242,9 +225,8 @@ async function deployAndSetupSnakes(): Promise<SnakeSoldier> {
     ethers.constants.AddressZero,
     `${IPFS_BASE}/eggs/general/air`,
     [],
-    [],
   );
-  // await sleep(12);
+  await sleep(12);
 
   await snakeSoldier.enableNextPhase(SOLDIER_PRICE, COMMANDER_PRICE, GENERAL_PRICE);
   return snakeSoldier;

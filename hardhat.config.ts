@@ -1,3 +1,4 @@
+import * as dotenv from 'dotenv';
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-toolbox';
@@ -5,6 +6,8 @@ import '@typechain/hardhat';
 import 'hardhat-contract-sizer';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
+
+dotenv.config();
 
 const config: HardhatUserConfig = {
   solidity: {

@@ -3,11 +3,10 @@ import { deployAndSetupGems, deployAndSetupSnakes } from './deployAndSetup'
 
 async function main() {
   const snakeSoldiers = await deployAndSetupSnakes();
-  // await sleep(20);
+  await sleep(20);
   const { elementGem, factionGem, skillGem, passport } = await deployAndSetupGems(
     snakeSoldiers.address,
   );
-  console.log('Skill gems deployed and configured');
 
   console.log('Snake Soldiers deployed to ', snakeSoldiers.address);
   console.log('Element Gem deployed to ', elementGem.address);
