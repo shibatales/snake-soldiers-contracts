@@ -1,23 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
-
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/access/Ownable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
-// Imported so it's included on typechain. We'll need it to display NFTs NFTs
-import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKMultiAssetRenderUtils.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
+error ElementAlreadyRevealed();
 error MaxGiftsPerPhaseReached();
-error MaxPhaseReached();
 error MintOverMax();
 error MintUnderpriced();
 error MintZero();
-error NextPhasePriceMustBeEqualOrHigher();
 error SaleNotOpen();
-error ElementAlreadyRevealed();
+error MaxPhaseReached();
+error NextPhasePriceMustBeEqualOrHigher();
 
 contract SnakeSoldier is
     Ownable,
@@ -27,12 +24,6 @@ contract SnakeSoldier is
 {
     using Strings for uint256;
 
-    enum Rank {
-        Soldier,
-        Commander,
-        General
-    }
-
     event Minted(
         Rank rank,
         address indexed buyer,
@@ -40,41 +31,33 @@ contract SnakeSoldier is
         uint256 indexed to
     );
 
-    mapping(Rank => uint256) private _totalSupply;
-    uint256 private _phase;
-    bool private _phasesLocked;
-    uint256 private _totalGifts;
-    uint256 private immutable _maxGiftsPerPhase;
-
-    uint256 private _pricePerSoldier;
-    uint256 private _pricePerCommander;
-    uint256 private _pricePerGeneral;
-
-    string private _defaultTokenUri;
-    mapping(uint64 => uint256) private _isTokenAssetEnumerated;
+    enum Rank {
+        Soldier,
+        Commander,
+        General
+    }
 
     uint256 private constant _MAX_SUPPLY_PER_PHASE_SOLDIERS = 1200; // A maximum possible of 1200*4=4800
     uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
     uint256 private constant _MAX_SUPPLY_PER_PHASE_GENERALS = 5; // A maximum possible of 5*4=20
     uint256 private constant _MAX_PHASES = 4;
 
-    mapping(uint256 => uint256) private _elementRevealed;
-    uint64 private constant _RES_ID_SOLDIER_EGG = 1;
-    uint64 private constant _RES_ID_COMMANDER_EGG = 2;
-    uint64 private constant _RES_ID_GENERAL_EGG = 3;
-    uint64 private constant _RES_ID_SOLDIER_EGG_FIRE = 4;
-    // uint64 private constant _RES_ID_SOLDIER_EGG_EARTH = 5;
-    // uint64 private constant _RES_ID_SOLDIER_EGG_WATER = 6;
-    // uint64 private constant _RES_ID_SOLDIER_EGG_AIR = 7;
-    uint64 private constant _RES_ID_COMMANDER_EGG_FIRE = 8;
-    // uint64 private constant _RES_ID_COMMANDER_EGG_EARTH = 9;
-    // uint64 private constant _RES_ID_COMMANDER_EGG_WATER = 10;
-    // uint64 private constant _RES_ID_COMMANDER_EGG_AIR = 11;
-    uint64 private constant _RES_ID_GENERAL_EGG_FIRE = 12;
-    // uint64 private constant _RES_ID_GENERAL_EGG_EARTH = 13;
-    // uint64 private constant _RES_ID_GENERAL_EGG_WATER = 14;
-    // uint64 private constant _RES_ID_GENERAL_EGG_AIR = 15;
-    // uint64 private constant _RES_ID_SNAKE = 16;
+    uint64 private constant _ASSET_ID_SOLDIER_EGG = 1;
+    uint64 private constant _ASSET_ID_COMMANDER_EGG = 2;
+    uint64 private constant _ASSET_ID_GENERAL_EGG = 3;
+    uint64 private constant _ASSET_ID_SOLDIER_EGG_FIRE = 4;
+    uint64 private constant _ASSET_ID_SOLDIER_EGG_EARTH = 5;
+    uint64 private constant _ASSET_ID_SOLDIER_EGG_WATER = 6;
+    uint64 private constant _ASSET_ID_SOLDIER_EGG_AIR = 7;
+    uint64 private constant _ASSET_ID_COMMANDER_EGG_FIRE = 8;
+    uint64 private constant _ASSET_ID_COMMANDER_EGG_EARTH = 9;
+    uint64 private constant _ASSET_ID_COMMANDER_EGG_WATER = 10;
+    uint64 private constant _ASSET_ID_COMMANDER_EGG_AIR = 11;
+    uint64 private constant _ASSET_ID_GENERAL_EGG_FIRE = 12;
+    uint64 private constant _ASSET_ID_GENERAL_EGG_EARTH = 13;
+    uint64 private constant _ASSET_ID_GENERAL_EGG_WATER = 14;
+    uint64 private constant _ASSET_ID_GENERAL_EGG_AIR = 15;
+    uint64 private constant _ASSET_ID_SNAKE = 16;
 
     uint256 private constant _GENERALS_OFFSET = 0; // No offset.
     uint256 private constant _COMMANDERS_OFFSET =
@@ -82,6 +65,21 @@ contract SnakeSoldier is
     uint256 private constant _SOLDIERS_OFFSET =
         (_MAX_SUPPLY_PER_PHASE_COMMANDERS + _MAX_SUPPLY_PER_PHASE_GENERALS) *
             _MAX_PHASES; // After generals and Commanders.
+
+    uint256 private _pricePerSoldier;
+    uint256 private _pricePerCommander;
+    uint256 private _pricePerGeneral;
+
+    mapping(uint256 => uint256) private _elementRevealed;
+    mapping(Rank => uint256) private _totalSupply;
+    uint256 private _phase;
+    bool private _phasesLocked;
+
+    string private _defaultTokenUri;
+    uint256 private _totalAssets;
+    mapping(uint64 => uint256) private _isTokenAssetEnumerated;
+    uint256 private _totalGifts;
+    uint256 private immutable _maxGiftsPerPhase;
 
     constructor(
         string memory collectionMetadata_,
@@ -92,14 +90,162 @@ contract SnakeSoldier is
         RMRKRoyalties(_msgSender(), 500) // 500 -> 5%
         RMRKEquippable("Snake Soldiers", "SS")
     {
-        // _phase = 0;  // Value is already 0
-        _defaultTokenUri = defaultTokenUri;
         _maxGiftsPerPhase = maxGiftsPerPhase_;
+        _defaultTokenUri = defaultTokenUri;
+    }
+
+    function updateRoyaltyRecipient(
+        address newRoyaltyRecipient
+    ) external override onlyOwner {
+        _setRoyaltyRecipient(newRoyaltyRecipient);
+    }
+
+    function tokenURI(uint256) public view returns (string memory) {
+        return _defaultTokenUri;
+    }
+
+    function addAssetEntry(
+        string memory metadataURI
+    ) public virtual onlyOwnerOrContributor returns (uint256) {
+        unchecked {
+            _totalAssets += 1;
+        }
+        _addAssetEntry(uint64(_totalAssets), metadataURI);
+        return _totalAssets;
+    }
+
+    function addEquippableAssetEntry(
+        uint64 equippableGroupId,
+        address catalogAddress,
+        string memory metadataURI,
+        uint64[] calldata partIds
+    ) public virtual onlyOwnerOrContributor returns (uint256) {
+        unchecked {
+            _totalAssets += 1;
+        }
+        _addAssetEntry(
+            uint64(_totalAssets),
+            equippableGroupId,
+            catalogAddress,
+            metadataURI,
+            partIds
+        );
+        return _totalAssets;
+    }
+
+    function addAssetToToken(
+        uint256 tokenId,
+        uint64 assetId,
+        uint64 replacesAssetWithId
+    ) public virtual onlyOwnerOrContributor {
+        _addAssetToToken(tokenId, assetId, replacesAssetWithId);
+        if (_msgSender() == ownerOf(tokenId)) {
+            _acceptAsset(tokenId, _pendingAssets[tokenId].length - 1, assetId);
+        }
+    }
+
+    function setValidParentForEquippableGroup(
+        uint64 equippableGroupId,
+        address parentAddress,
+        uint64 partId
+    ) public virtual onlyOwnerOrContributor {
+        _setValidParentForEquippableGroup(
+            equippableGroupId,
+            parentAddress,
+            partId
+        );
+    }
+
+    function getAssetMetadata(
+        uint256 tokenId,
+        uint64 assetId
+    )
+        public
+        view
+        override(AbstractMultiAsset, IRMRKMultiAsset)
+        returns (string memory)
+    {
+        string memory metaUri = super.getAssetMetadata(tokenId, assetId);
+        if (_isTokenAssetEnumerated[assetId] != 0)
+            metaUri = string(abi.encodePacked(metaUri, tokenId.toString()));
+        return metaUri;
+    }
+
+    function setAssetEnumerated(
+        uint64 assetId,
+        bool enumerated
+    ) external onlyOwner {
+        if (enumerated) _isTokenAssetEnumerated[assetId] = 1;
+        else delete _isTokenAssetEnumerated[assetId];
+    }
+
+    function totalAssets() public view returns (uint256) {
+        return _totalAssets;
+    }
+
+    function totalSupply(Rank rank) public view returns (uint256) {
+        return _totalSupply[rank];
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return
+            _totalSupply[Rank.Soldier] +
+            _totalSupply[Rank.Commander] +
+            _totalSupply[Rank.General];
+    }
+
+    function maxSupply(Rank rank) public view returns (uint256) {
+        if (rank == Rank.Soldier)
+            return _MAX_SUPPLY_PER_PHASE_SOLDIERS * _phase;
+        else if (rank == Rank.Commander)
+            return _MAX_SUPPLY_PER_PHASE_COMMANDERS * _phase;
+        else return _MAX_SUPPLY_PER_PHASE_GENERALS * _phase;
+    }
+
+    function maxSupply() public view returns (uint256) {
+        return
+            (_MAX_SUPPLY_PER_PHASE_SOLDIERS +
+                _MAX_SUPPLY_PER_PHASE_COMMANDERS +
+                _MAX_SUPPLY_PER_PHASE_GENERALS) * _phase;
+    }
+
+    function enableNextPhase(
+        uint256 pricePerSoldier,
+        uint256 pricePerCommander,
+        uint256 pricePerGeneral
+    ) external onlyOwner {
+        if (_phase == _MAX_PHASES || _phasesLocked) revert MaxPhaseReached();
+
+        if (
+            _pricePerSoldier > pricePerSoldier ||
+            _pricePerCommander > pricePerCommander ||
+            _pricePerGeneral > pricePerGeneral
+        ) revert NextPhasePriceMustBeEqualOrHigher();
+
+        _phase += 1;
+        _pricePerSoldier = pricePerSoldier;
+        _pricePerCommander = pricePerCommander;
+        _pricePerGeneral = pricePerGeneral;
+    }
+
+    function lockPhases() external onlyOwner {
+        _phasesLocked = true;
+    }
+
+    function _rankOffset(Rank rank) private pure returns (uint256) {
+        if (rank == Rank.Soldier) return _SOLDIERS_OFFSET;
+        else if (rank == Rank.Commander) return _COMMANDERS_OFFSET;
+        else return _GENERALS_OFFSET;
+    }
+
+    function pricePerMint(Rank rank) public view returns (uint256) {
+        if (rank == Rank.Soldier) return _pricePerSoldier;
+        else if (rank == Rank.Commander) return _pricePerCommander;
+        else return _pricePerGeneral;
     }
 
     function mint(address to, uint256 numToMint, Rank rank) external payable {
         _mintChecks(numToMint, rank);
-
         uint256 mintPriceRequired = numToMint * pricePerMint(rank);
         if (mintPriceRequired != msg.value) revert MintUnderpriced();
 
@@ -134,11 +280,11 @@ contract SnakeSoldier is
         for (uint256 i = nextToken; i < totalSupplyOffset; ) {
             _safeMint(to, i, "");
             if (i > _SOLDIERS_OFFSET) {
-                assetId = _RES_ID_SOLDIER_EGG;
+                assetId = _ASSET_ID_SOLDIER_EGG;
             } else if (i > _COMMANDERS_OFFSET) {
-                assetId = _RES_ID_COMMANDER_EGG;
+                assetId = _ASSET_ID_COMMANDER_EGG;
             } else {
-                assetId = _RES_ID_GENERAL_EGG;
+                assetId = _ASSET_ID_GENERAL_EGG;
             }
             _addAssetToToken(i, assetId, 0);
             _acceptAsset(i, 0, assetId);
@@ -150,175 +296,9 @@ contract SnakeSoldier is
         emit Minted(rank, to, nextToken, totalSupplyOffset - 1);
     }
 
-    function addAssetEntry(
-        uint64 id,
-        uint64 equippableGroupId,
-        address baseAddress,
-        string memory metadataURI,
-        uint64[] calldata partIds
-    ) external onlyOwnerOrContributor {
-        _addAssetEntry(
-            id,
-            equippableGroupId,
-            baseAddress,
-            metadataURI,
-            partIds
-        );
-    }
-
-    function addAssetToTokens(
-        uint256[] calldata tokenIds,
-        uint64 assetId,
-        uint64 overwrites
-    ) external onlyOwnerOrContributor {
-        uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
-            _addAssetToToken(tokenIds[i], assetId, overwrites);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function setValidParentForEquippableGroup(
-        uint64 equippableGroupId,
-        address parentAddress,
-        uint64 slotPartId
-    ) external onlyOwner {
-        _setValidParentForEquippableGroup(
-            equippableGroupId,
-            parentAddress,
-            slotPartId
-        );
-    }
-
-    function totalSupply(Rank rank) public view returns (uint256) {
-        return _totalSupply[rank];
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return
-            _totalSupply[Rank.Soldier] +
-            _totalSupply[Rank.Commander] +
-            _totalSupply[Rank.General];
-    }
-
-    function maxSupply(Rank rank) public view returns (uint256) {
-        if (rank == Rank.Soldier)
-            return _MAX_SUPPLY_PER_PHASE_SOLDIERS * _phase;
-        else if (rank == Rank.Commander)
-            return _MAX_SUPPLY_PER_PHASE_COMMANDERS * _phase;
-        else return _MAX_SUPPLY_PER_PHASE_GENERALS * _phase;
-    }
-
-    function maxSupply() public view returns (uint256) {
-        return
-            (_MAX_SUPPLY_PER_PHASE_SOLDIERS +
-                _MAX_SUPPLY_PER_PHASE_COMMANDERS +
-                _MAX_SUPPLY_PER_PHASE_GENERALS) * _phase;
-    }
-
-    function maxGifts() public view returns (uint256) {
-        return _maxGiftsPerPhase * _phase;
-    }
-
-    function totalGifts() public view returns (uint256) {
-        return _totalGifts;
-    }
-
-    function pricePerMint(Rank rank) public view returns (uint256) {
-        if (rank == Rank.Soldier) return _pricePerSoldier;
-        else if (rank == Rank.Commander) return _pricePerCommander;
-        else return _pricePerGeneral;
-    }
-
-    function updateRoyaltyRecipient(
-        address newRoyaltyRecipient
-    ) external override onlyOwner {
-        _setRoyaltyRecipient(newRoyaltyRecipient);
-    }
-
-    function enableNextPhase(
-        uint256 pricePerSoldier,
-        uint256 pricePerCommander,
-        uint256 pricePerGeneral
-    ) external onlyOwner {
-        if (_phase == _MAX_PHASES || _phasesLocked) revert MaxPhaseReached();
-
-        if (
-            _pricePerSoldier > pricePerSoldier ||
-            _pricePerCommander > pricePerCommander ||
-            _pricePerGeneral > pricePerGeneral
-        ) revert NextPhasePriceMustBeEqualOrHigher();
-
-        _phase += 1;
-        _pricePerSoldier = pricePerSoldier;
-        _pricePerCommander = pricePerCommander;
-        _pricePerGeneral = pricePerGeneral;
-    }
-
-    function lockPhases() external onlyOwner {
-        _phasesLocked = true;
-    }
-
     function withdrawRaised(address to, uint256 amount) external onlyOwner {
         (bool success, ) = to.call{value: amount}("");
         require(success, "Transfer failed.");
-    }
-
-    function _rankOffset(Rank rank) private pure returns (uint256) {
-        if (rank == Rank.Soldier) return _SOLDIERS_OFFSET;
-        else if (rank == Rank.Commander) return _COMMANDERS_OFFSET;
-        else return _GENERALS_OFFSET;
-    }
-
-    function tokenURI(uint256) public view override returns (string memory) {
-        return _defaultTokenUri;
-    }
-
-    function getAssetMetadata(
-        uint256 tokenId,
-        uint64 assetId
-    )
-        public
-        view
-        override(AbstractMultiAsset, IRMRKMultiAsset)
-        returns (string memory)
-    {
-        string memory metaUri = super.getAssetMetadata(tokenId, assetId);
-        if (_isTokenAssetEnumerated[assetId] != 0)
-            metaUri = string(abi.encodePacked(metaUri, tokenId.toString()));
-        return metaUri;
-    }
-
-    function setAssetEnumerated(
-        uint64 assetId,
-        bool enumerated
-    ) external onlyOwner {
-        if (enumerated) _isTokenAssetEnumerated[assetId] = 1;
-        else delete _isTokenAssetEnumerated[assetId];
-    }
-
-    // This is not ideal but we temporarily add it since we had no time for an indexer.
-    function getIdsAndOwners(
-        uint256 initId,
-        uint256 size
-    ) external view returns (uint256[] memory, address[] memory) {
-        address[] memory owners = new address[](size);
-        uint256[] memory ids = new uint256[](size);
-        uint256 tokenId;
-
-        for (uint256 i; i < size; ) {
-            tokenId = initId + i;
-            ids[i] = tokenId;
-            if (_exists(tokenId)) {
-                owners[i] = ownerOf(tokenId);
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        return (ids, owners);
     }
 
     function revealElement(
@@ -331,14 +311,14 @@ contract SnakeSoldier is
 
         // The "+ tokenId % 4" part, sets the asset for the right element
         if (tokenId > _SOLDIERS_OFFSET) {
-            oldAssetId = _RES_ID_SOLDIER_EGG;
-            newAssetId = _RES_ID_SOLDIER_EGG_FIRE + uint64(tokenId % 4);
+            oldAssetId = _ASSET_ID_SOLDIER_EGG;
+            newAssetId = _ASSET_ID_SOLDIER_EGG_FIRE + uint64(tokenId % 4);
         } else if (tokenId > _COMMANDERS_OFFSET) {
-            oldAssetId = _RES_ID_COMMANDER_EGG;
-            newAssetId = _RES_ID_COMMANDER_EGG_FIRE + uint64(tokenId % 4);
+            oldAssetId = _ASSET_ID_COMMANDER_EGG;
+            newAssetId = _ASSET_ID_COMMANDER_EGG_FIRE + uint64(tokenId % 4);
         } else {
-            oldAssetId = _RES_ID_GENERAL_EGG;
-            newAssetId = _RES_ID_GENERAL_EGG_FIRE + uint64(tokenId % 4);
+            oldAssetId = _ASSET_ID_GENERAL_EGG;
+            newAssetId = _ASSET_ID_GENERAL_EGG_FIRE + uint64(tokenId % 4);
         }
         _addAssetToToken(tokenId, newAssetId, oldAssetId);
         _acceptAsset(tokenId, 0, newAssetId);

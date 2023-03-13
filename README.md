@@ -1,1 +1,7 @@
 # Snake Soldiers
+
+Snake Soldiers deployed to 0x27CAa1a6062e362E0e2766E2B585753254142A1f
+Element Gem deployed to 0xf5402170CB46fFf9A422380A35435B453b8F7a9f
+Faction Gem deployed to 0xbAcB09A79909Ff30BAd708eCb0DeecbBC4DEe702
+Skill Gem deployed to 0xEa3b814284F83ba730a2516825b33Cfd64cD1b52
+Serpenterra Passport deployed to 0xa165885cf765923D64BC5b3d6a554D9e85CC7890

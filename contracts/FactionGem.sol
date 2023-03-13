@@ -2,44 +2,20 @@
 
 pragma solidity ^0.8.16;
 
-import "./ISerpenterraPassport.sol";
-import "@rmrk-team/evm-contracts/contracts/RMRK/access/OwnableLock.sol";
-import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
-import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
+import "./BaseGem.sol";
+import "./ISerpenTerraPassport.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/soulbound/RMRKSoulbound.sol";
-import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
 
-error GemAlreadyClaimed();
-error CannotMintGemForNotOwnedToken();
-
-contract FactionGem is
-    OwnableLock,
-    RMRKCollectionMetadata,
-    RMRKRoyalties,
-    RMRKSoulbound,
-    RMRKEquippable
-{
-    address private immutable _snakeSoldiers;
-    address private immutable _passportAddress;
-    mapping(uint256 => uint256) private _claimed;
-    string private _tokenURI;
-    uint256 private _totalSupply;
-    uint256 private immutable _maxSupply;
-
-    uint64 private constant _MAIN_ASSET_ID = uint64(1);
-    // uint64 private constant _EQUIP_ASSET_ID = uint64(2);
-
+contract FactionGem is RMRKSoulbound, BaseGem {
     string private constant _POST_URL_PER_TYPE_ISLANDS = "islands";
     string private constant _POST_URL_PER_TYPE_DESERT = "desert";
     string private constant _POST_URL_PER_TYPE_VALLEY = "valley";
     string private constant _POST_URL_PER_TYPE_MOUNTAIN = "mountain";
     string private constant _POST_URL_PER_TYPE_FOREST = "forest";
 
-    uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
-    uint256 private constant _MAX_SUPPLY_PER_PHASE_GENERALS = 5; // A maximum possible of 5*4=20
-    uint256 private constant _MAX_PHASES = 4;
-    uint256 private constant _COMMANDERS_OFFSET =
-        _MAX_SUPPLY_PER_PHASE_GENERALS * _MAX_PHASES; // Starts after generals.
+    uint256 private constant _COMMANDERS_OFFSET = 20;
+
+    address private _passportAddress;
 
     constructor(
         string memory collectionMetadata_,
@@ -48,133 +24,20 @@ contract FactionGem is
         uint256 maxSupply_,
         address passportAddress
     )
-        // Custom optional: additional parameters
-        RMRKCollectionMetadata(collectionMetadata_)
-        RMRKRoyalties(_msgSender(), 500) // 500 -> 5%
-        RMRKEquippable("Snake Soldiers Faction Gem", "SSFG")
+        BaseGem(
+            "Snake Soldiers Element Gem",
+            "SSEG",
+            collectionMetadata_,
+            tokenURI_,
+            snakeSoldiers_,
+            maxSupply_
+        )
     {
-        _snakeSoldiers = snakeSoldiers_;
-        _maxSupply = maxSupply_;
-        _tokenURI = tokenURI_;
+        setPassportAddress(passportAddress);
+    }
+
+    function setPassportAddress(address passportAddress) public onlyOwner {
         _passportAddress = passportAddress;
-    }
-
-    function snakeSoldiers() external view returns (address) {
-        return _snakeSoldiers;
-    }
-
-    function claimed(uint256 snakeTokenId) external view returns (bool) {
-        return _claimed[snakeTokenId] == 1;
-    }
-
-    function claimMany(uint256[] calldata snakeTokenIds) external {
-        uint256 length = snakeTokenIds.length;
-        for (uint256 i; i < length; ) {
-            _claim(snakeTokenIds[0]);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function claim(uint256 snakeTokenId) external {
-        _claim(snakeTokenId);
-    }
-
-    function _claim(uint256 snakeTokenId) private {
-        // We use the same id for the gem just because relationship is 1 to 1
-        if (_claimed[snakeTokenId] == 1) revert GemAlreadyClaimed();
-
-        _claimed[snakeTokenId] = 1;
-        _totalSupply += 1;
-
-        address owner = IRMRKNestable(_snakeSoldiers).ownerOf(snakeTokenId);
-        if (_msgSender() != owner) revert CannotMintGemForNotOwnedToken();
-        _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId, "");
-        _addAssetToToken(snakeTokenId, _MAIN_ASSET_ID, uint64(0));
-        _acceptAsset(snakeTokenId, 0, _MAIN_ASSET_ID);
-        // This asset is not yet ready
-        // _addAssetToToken(snakeTokenId, _EQUIP_ASSET_ID, uint64(0));
-        // _acceptAsset(snakeTokenId, 0, _EQUIP_ASSET_ID);
-    }
-
-    function addAssetEntry(
-        uint64 id,
-        uint64 equippableGroupId,
-        address baseAddress,
-        string memory metadataURI,
-        uint64[] calldata partIds
-    ) external onlyOwnerOrContributor {
-        _addAssetEntry(
-            id,
-            equippableGroupId,
-            baseAddress,
-            metadataURI,
-            partIds
-        );
-    }
-
-    function addAssetToTokens(
-        uint256[] calldata tokenIds,
-        uint64 assetId,
-        uint64 overwrites
-    ) external onlyOwnerOrContributor {
-        uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
-            _addAssetToToken(tokenIds[i], assetId, overwrites);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function setValidParentForEquippableGroup(
-        uint64 equippableGroupId,
-        address parentAddress,
-        uint64 slotPartId
-    ) external onlyOwner {
-        _setValidParentForEquippableGroup(
-            equippableGroupId,
-            parentAddress,
-            slotPartId
-        );
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
-    }
-
-    function maxSupply() public view returns (uint256) {
-        return _maxSupply;
-    }
-
-    function updateRoyaltyRecipient(
-        address newRoyaltyRecipient
-    ) external override onlyOwner {
-        _setRoyaltyRecipient(newRoyaltyRecipient);
-    }
-
-    function withdrawRaised(address to, uint256 amount) external onlyOwner {
-        (bool success, ) = to.call{value: amount}("");
-        require(success, "Transfer failed.");
-    }
-
-    function tokenURI(uint256) public view override returns (string memory) {
-        return _tokenURI;
-    }
-
-    function getAssetMetadata(
-        uint256 tokenId,
-        uint64 assetId
-    )
-        public
-        view
-        override(AbstractMultiAsset, IRMRKMultiAsset)
-        returns (string memory)
-    {
-        string memory metaUri = super.getAssetMetadata(tokenId, assetId);
-        string memory postUri = _postUriFor(tokenId);
-        return string(abi.encodePacked(metaUri, postUri));
     }
 
     function supportsInterface(
@@ -197,15 +60,18 @@ contract FactionGem is
         uint256 tokenId
     ) internal virtual override(RMRKCore, RMRKSoulbound) {
         super._beforeTokenTransfer(from, to, tokenId);
-        if(from != address(0) && to != address(0)) {
+        bool isForestGem = tokenId % 5 == 4;
+        if (from != address(0) && to != address(0) && !isForestGem) {
             address owner = ownerOf(tokenId);
-            ISerpenterraPassport(_passportAddress).burnFromFactionGem(owner, 1);
+            ISerpenTerraPassport(_passportAddress).burnFromFactionGem(owner, 1);
         }
     }
 
     // Factions are assigned round robing style, it's an easy way to make sure
     // that the number of snakes per element is as similar as possible.
-    function _postUriFor(uint256 tokenId) private pure returns (string memory) {
+    function _postUriFor(
+        uint256 tokenId
+    ) internal pure override returns (string memory) {
         uint256 mod;
 
         if (tokenId > _COMMANDERS_OFFSET) {
@@ -221,18 +87,16 @@ contract FactionGem is
         else return _POST_URL_PER_TYPE_FOREST;
     }
 
-    function isSoulbound(uint256 tokenId) public view override returns (bool) {
+    function isNonTransferable(
+        uint256 tokenId
+    ) public view override returns (bool) {
         uint256 mod = tokenId % 5;
         if (mod == 4) return false; // Forest gem is not soulbound
 
         address owner = ownerOf(tokenId);
-        uint256 balance = ISerpenterraPassport(_passportAddress).balanceOf(
+        uint256 balance = ISerpenTerraPassport(_passportAddress).balanceOf(
             owner
         );
-        // Idea: I want to get the balance of the snake that owns this token.
-        // I can only get the balance of the snake contract
-        // If owner has no passport, then it is soulbound.
-        // Alternatively we could loo through snake's children
         return balance == 0;
     }
 }
