@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 100,
       },
     },
   },
@@ -26,6 +26,7 @@ const config: HardhatUserConfig = {
     moonbaseAlpha: {
       url: 'https://rpc.testnet.moonbeam.network',
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 1000000000,
     },
     moonriver: {
       url: 'https://rpc.api.moonriver.moonbeam.network',

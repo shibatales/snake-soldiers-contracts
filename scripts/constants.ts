@@ -11,18 +11,14 @@ function bn(num: number): BigNumber {
   return BigNumber.from(num);
 }
 
-const BASE_URI = 'https://ABC'; // TODO, replace with actual IPFS base
-const ELEMENT_GEM_METADATA = `${BASE_URI}/elementGemMetadata`;
-const ELEMENT_GEM_DEFAULT_URI = `${BASE_URI}/elementGemDefaultUri`;
-const SKILL_GEM_METADATA = `${BASE_URI}/skillGemMetadata`;
-const SKILL_GEM_DEFAULT_URI = `${BASE_URI}/skillGemDefaultUri`;
-const FACTION_GEM_METADATA = `${BASE_URI}/factionGemMetadata`;
-const FACTION_GEM_DEFAULT_URI = `${BASE_URI}/factionGemDefaultUri`;
-const SNAKE_METADATA_URI = `${BASE_URI}/snakeMetadata`;
-const SNAKE_DEFAULT_URI = `${BASE_URI}/snakeDefaultUri`;
-const CATALOG_METADATA_URI = `${BASE_URI}/catalogMetadata`;
+const BASE_URI = 'ipfs://Qmd4oLxGZdRwrdkK5TLqSQg75RauGbn3XNdErUJCdpgUXw'; // TODO, replace with actual IPFS base
+const ELEMENT_GEM_METADATA = `${BASE_URI}/gems/elements/collectionMeta`;
+const SKILL_GEM_METADATA = `${BASE_URI}/gems/skills/collectionMeta`;
+const FACTION_GEM_METADATA = `${BASE_URI}/gems/factions/collectionMeta`;
+const SNAKE_METADATA_URI = `${BASE_URI}/soldiers/collectionMeta`;
+const CATALOG_METADATA_URI = ``;
 const CATALOG_TYPE = 'img/png';
-const MAX_GIFTS_PER_PHASE = bn(10);
+const MAX_GIFTS_PER_PHASE = bn(20);
 const MAX_SUPPLY_FOR_GEMS = bn(5000);
 
 const SOLDIER_RANK = 0;
@@ -59,13 +55,9 @@ export {
   bn,
   BASE_URI,
   ELEMENT_GEM_METADATA,
-  ELEMENT_GEM_DEFAULT_URI,
   SKILL_GEM_METADATA,
-  SKILL_GEM_DEFAULT_URI,
   FACTION_GEM_METADATA,
-  FACTION_GEM_DEFAULT_URI,
   SNAKE_METADATA_URI,
-  SNAKE_DEFAULT_URI,
   MAX_GIFTS_PER_PHASE,
   MAX_SUPPLY_FOR_GEMS,
   CATALOG_METADATA_URI,

@@ -12,7 +12,6 @@ contract SkillGem is BaseGem {
 
     constructor(
         string memory collectionMetadata_,
-        string memory tokenURI_,
         address snakeSoldiers_,
         uint256 maxSupply_
     )
@@ -20,7 +19,6 @@ contract SkillGem is BaseGem {
             "Snake Soldiers Skill Gem",
             "SSSG",
             collectionMetadata_,
-            tokenURI_,
             snakeSoldiers_,
             maxSupply_
         )

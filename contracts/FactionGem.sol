@@ -19,7 +19,6 @@ contract FactionGem is RMRKSoulbound, BaseGem {
 
     constructor(
         string memory collectionMetadata_,
-        string memory tokenURI_,
         address snakeSoldiers_,
         uint256 maxSupply_,
         address passportAddress
@@ -28,7 +27,6 @@ contract FactionGem is RMRKSoulbound, BaseGem {
             "Snake Soldiers Element Gem",
             "SSEG",
             collectionMetadata_,
-            tokenURI_,
             snakeSoldiers_,
             maxSupply_
         )

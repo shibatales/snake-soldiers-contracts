@@ -21,7 +21,6 @@ import {
   GENERAL_PRICE,
   GENERAL_RANK,
   MAX_GIFTS_PER_PHASE,
-  SNAKE_DEFAULT_URI,
   SOLDIER_PRICE,
   SOLDIER_RANK,
 } from '../scripts/constants';
@@ -187,24 +186,28 @@ describe('SnakeSoldiers', async () => {
 
     it('cannot manage assets if not owner', async function () {
       await expect(
-        snakeSoldiers.connect(notOwner).addAssetEntry('ipfs://customAsset'),
+        snakeSoldiers
+          .connect(notOwner)
+          .addEquippableAssetEntries(0, ethers.constants.AddressZero, ['ipfs://customAsset'], []),
       ).to.be.revertedWithCustomError(snakeSoldiers, 'RMRKNotOwnerOrContributor');
 
       await expect(
         snakeSoldiers
           .connect(notOwner)
-          .addEquippableAssetEntry(0, catalog.address, 'ipfs://customEquippableAsset', []),
+          .addEquippableAssetEntries(0, catalog.address, ['ipfs://customEquippableAsset'], []),
       ).to.be.revertedWithCustomError(snakeSoldiers, 'RMRKNotOwnerOrContributor');
 
       // Let's create a valid asset and a minted token
-      await snakeSoldiers.connect(issuer).addAssetEntry('ipfs://customAsset');
+      await snakeSoldiers
+        .connect(issuer)
+        .addEquippableAssetEntries(0, ethers.constants.AddressZero, ['ipfs://customAsset'], []);
       const assetId = await snakeSoldiers.totalAssets();
       await snakeSoldiers
         .connect(buyer)
         .mint(buyer.address, 1, GENERAL_RANK, { value: GENERAL_PRICE });
 
       await expect(
-        snakeSoldiers.connect(notOwner).addAssetToToken(1, assetId, 0),
+        snakeSoldiers.connect(notOwner).addAssetsToTokens([1], [assetId], 0),
       ).to.be.revertedWithCustomError(snakeSoldiers, 'RMRKNotOwnerOrContributor');
       await expect(
         snakeSoldiers
@@ -257,7 +260,8 @@ describe('SnakeSoldiers', async () => {
 
       // Note: I can use .only to run a single test or group of tests
       it('can get tokenURI (backwards compatibility)', async function () {
-        expect(await snakeSoldiers.tokenURI(1)).to.eql(SNAKE_DEFAULT_URI);
+        console.log(await snakeSoldiers.tokenURI(1));
+        expect(await snakeSoldiers.tokenURI(1)).to.eql(`${BASE_URI}/eggs/general/generic`);
       });
 
       // Note: Even though these are very similar tests, I prefer to have them separated. In case something breaks we know exactly what is failing.
@@ -283,9 +287,14 @@ describe('SnakeSoldiers', async () => {
 
       it('can add regular assets', async function () {
         const snakeId = 1;
-        await snakeSoldiers.addAssetEntry('ipfs://someAsset');
+        await snakeSoldiers.addEquippableAssetEntries(
+          0,
+          ethers.constants.AddressZero,
+          ['ipfs://someAsset'],
+          [],
+        );
         const assetId = await snakeSoldiers.totalAssets();
-        await snakeSoldiers.addAssetToToken(snakeId, assetId, 0);
+        await snakeSoldiers.addAssetsToTokens([snakeId], [assetId], 0);
         expect(await renderUtils.getPendingAssets(snakeSoldiers.address, snakeId)).to.eql([
           [assetId, bn(0), bn(0), 'ipfs://someAsset'],
         ]);
@@ -293,10 +302,15 @@ describe('SnakeSoldiers', async () => {
 
       it('can add enumerated assets', async function () {
         const snakeId = 1;
-        await snakeSoldiers.addAssetEntry('ipfs://someEnumeratedAsset/');
+        await snakeSoldiers.addEquippableAssetEntries(
+          0,
+          ethers.constants.AddressZero,
+          ['ipfs://someEnumeratedAsset/'],
+          [],
+        );
         const assetId = await snakeSoldiers.totalAssets();
         await snakeSoldiers.setAssetEnumerated(assetId, true);
-        await snakeSoldiers.addAssetToToken(snakeId, assetId, 0);
+        await snakeSoldiers.addAssetsToTokens([snakeId], [assetId], 0);
         expect(await renderUtils.getPendingAssets(snakeSoldiers.address, snakeId)).to.eql([
           [assetId, bn(0), bn(0), 'ipfs://someEnumeratedAsset/1'],
         ]);
@@ -304,11 +318,16 @@ describe('SnakeSoldiers', async () => {
 
       it('can unset assets as enumerated', async function () {
         const snakeId = 1;
-        await snakeSoldiers.addAssetEntry('ipfs://someEnumeratedAsset/');
+        await snakeSoldiers.addEquippableAssetEntries(
+          0,
+          ethers.constants.AddressZero,
+          ['ipfs://someEnumeratedAsset/'],
+          [],
+        );
         const assetId = await snakeSoldiers.totalAssets();
         await snakeSoldiers.setAssetEnumerated(assetId, true);
         await snakeSoldiers.setAssetEnumerated(assetId, false);
-        await snakeSoldiers.addAssetToToken(snakeId, assetId, 0);
+        await snakeSoldiers.addAssetsToTokens([snakeId], [assetId], 0);
         expect(await renderUtils.getPendingAssets(snakeSoldiers.address, snakeId)).to.eql([
           [assetId, bn(0), bn(0), 'ipfs://someEnumeratedAsset/'],
         ]);
@@ -429,11 +448,22 @@ describe('SnakeSoldiers', async () => {
         );
       });
 
+      it('cannot claim gems if claim is not active', async function () {
+        await expect(elementGem.connect(buyer).claim(1)).to.be.revertedWithCustomError(
+          elementGem,
+          'ClaimingNotActive',
+        );
+      });
+
       // Note: Some times, I will just test a few things at once because they all depend on the exact same setup
       it('can claim gems', async function () {
         const tokenId = 1;
         // All snakes use the same asset it, but the metadata varies according to type
         const gemAssetId = 1;
+        await elementGem.setClaimActive();
+        await factionGem.setClaimActive();
+        await skillGem.setClaimActive();
+
         await elementGem.connect(buyer).claim(tokenId);
         await factionGem.connect(buyer).claim(tokenId);
         await skillGem.connect(buyer).claim(tokenId);
@@ -441,7 +471,7 @@ describe('SnakeSoldiers', async () => {
         expect(await elementGem.claimed(tokenId)).to.eql(true);
         expect(await factionGem.claimed(tokenId)).to.eql(true);
         expect(await skillGem.claimed(tokenId)).to.eql(true);
-        expect(await snakeSoldiers.pendingChildrenOf(tokenId)).to.eql([
+        expect(await snakeSoldiers.childrenOf(tokenId)).to.eql([
           // It mints the same ID on the gem
           [bn(tokenId), elementGem.address],
           [bn(tokenId), factionGem.address],

@@ -41,6 +41,7 @@ contract SnakeSoldier is
     uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
     uint256 private constant _MAX_SUPPLY_PER_PHASE_GENERALS = 5; // A maximum possible of 5*4=20
     uint256 private constant _MAX_PHASES = 4;
+    uint16 private constant _LOWEST_POSSIBLE_PRIORITY = 2 ^ (16 - 1);
 
     uint64 private constant _ASSET_ID_SOLDIER_EGG = 1;
     uint64 private constant _ASSET_ID_COMMANDER_EGG = 2;
@@ -57,7 +58,6 @@ contract SnakeSoldier is
     uint64 private constant _ASSET_ID_GENERAL_EGG_EARTH = 13;
     uint64 private constant _ASSET_ID_GENERAL_EGG_WATER = 14;
     uint64 private constant _ASSET_ID_GENERAL_EGG_AIR = 15;
-    uint64 private constant _ASSET_ID_SNAKE = 16;
 
     uint256 private constant _GENERALS_OFFSET = 0; // No offset.
     uint256 private constant _COMMANDERS_OFFSET =
@@ -75,15 +75,14 @@ contract SnakeSoldier is
     uint256 private _phase;
     bool private _phasesLocked;
 
-    string private _defaultTokenUri;
     uint256 private _totalAssets;
     mapping(uint64 => uint256) private _isTokenAssetEnumerated;
+    mapping(address => bool) private _autoAcceptCollection;
     uint256 private _totalGifts;
     uint256 private immutable _maxGiftsPerPhase;
 
     constructor(
         string memory collectionMetadata_,
-        string memory defaultTokenUri,
         uint256 maxGiftsPerPhase_
     )
         RMRKCollectionMetadata(collectionMetadata_)
@@ -91,7 +90,6 @@ contract SnakeSoldier is
         RMRKEquippable("Snake Soldiers", "SS")
     {
         _maxGiftsPerPhase = maxGiftsPerPhase_;
-        _defaultTokenUri = defaultTokenUri;
     }
 
     function updateRoyaltyRecipient(
@@ -100,47 +98,64 @@ contract SnakeSoldier is
         _setRoyaltyRecipient(newRoyaltyRecipient);
     }
 
-    function tokenURI(uint256) public view returns (string memory) {
-        return _defaultTokenUri;
-    }
-
-    function addAssetEntry(
-        string memory metadataURI
-    ) public virtual onlyOwnerOrContributor returns (uint256) {
-        unchecked {
-            _totalAssets += 1;
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual returns (string memory) {
+        _requireMinted(tokenId);
+        // We assume this alway has at least 1 element, since we add it on mint and it can only be replaced, not removed
+        uint16[] memory priorities = getActiveAssetPriorities(tokenId);
+        uint256 len = priorities.length;
+        uint16 maxPriority = _LOWEST_POSSIBLE_PRIORITY;
+        uint64 maxPriorityIndex;
+        for (uint64 i; i < len; ) {
+            uint16 currentPrio = priorities[i];
+            if (currentPrio < maxPriority) {
+                maxPriority = currentPrio;
+                maxPriorityIndex = i;
+            }
+            unchecked {
+                ++i;
+            }
         }
-        _addAssetEntry(uint64(_totalAssets), metadataURI);
-        return _totalAssets;
+        uint64 maxPriorityAssetId = getActiveAssets(tokenId)[maxPriorityIndex];
+        return getAssetMetadata(tokenId, maxPriorityAssetId);
     }
 
-    function addEquippableAssetEntry(
+    function addEquippableAssetEntries(
         uint64 equippableGroupId,
         address catalogAddress,
-        string memory metadataURI,
-        uint64[] calldata partIds
-    ) public virtual onlyOwnerOrContributor returns (uint256) {
-        unchecked {
-            _totalAssets += 1;
+        string[] memory metadataURI,
+        uint64[] memory partIds
+    ) public virtual onlyOwnerOrContributor {
+        uint256 len = metadataURI.length;
+        for (uint256 i; i < len; ) {
+            unchecked {
+                ++_totalAssets;
+            }
+            _addAssetEntry(
+                uint64(_totalAssets),
+                equippableGroupId,
+                catalogAddress,
+                metadataURI[i],
+                partIds
+            );
+            unchecked {
+                ++i;
+            }
         }
-        _addAssetEntry(
-            uint64(_totalAssets),
-            equippableGroupId,
-            catalogAddress,
-            metadataURI,
-            partIds
-        );
-        return _totalAssets;
     }
 
-    function addAssetToToken(
-        uint256 tokenId,
-        uint64 assetId,
+    function addAssetsToTokens(
+        uint256[] memory tokenIds,
+        uint64[] memory assetIds,
         uint64 replacesAssetWithId
     ) public virtual onlyOwnerOrContributor {
-        _addAssetToToken(tokenId, assetId, replacesAssetWithId);
-        if (_msgSender() == ownerOf(tokenId)) {
-            _acceptAsset(tokenId, _pendingAssets[tokenId].length - 1, assetId);
+        uint256 len = tokenIds.length;
+        for (uint256 i; i < len; ) {
+            _addAssetToToken(tokenIds[i], assetIds[i], replacesAssetWithId);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -322,5 +337,28 @@ contract SnakeSoldier is
         }
         _addAssetToToken(tokenId, newAssetId, oldAssetId);
         _acceptAsset(tokenId, 0, newAssetId);
+    }
+
+    function setAutoAcceptCollection(
+        address collection
+    ) public virtual onlyOwner {
+        _autoAcceptCollection[collection] = true;
+    }
+
+    function _afterAddChild(
+        uint256 tokenId,
+        address childAddress,
+        uint256 childId,
+        bytes memory
+    ) internal override {
+        // Auto accept children if they are from known collections
+        if (_autoAcceptCollection[childAddress]) {
+            _acceptChild(
+                tokenId,
+                _pendingChildren[tokenId].length - 1,
+                childAddress,
+                childId
+            );
+        }
     }
 }
