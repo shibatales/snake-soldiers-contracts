@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.18;
 
 import "@rmrk-team/evm-contracts/contracts/RMRK/access/Ownable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
@@ -26,7 +26,7 @@ abstract contract BaseGem is
 
     uint64 private constant _MAIN_ASSET_ID = uint64(1);
     uint256 internal constant _SOLDIERS_OFFSET = 200;
-    uint16 private constant _LOWEST_POSSIBLE_PRIORITY = 2 ^ (16 - 1);
+    uint64 private constant _LOWEST_POSSIBLE_PRIORITY = (2 ^ 16) - 1;
 
     modifier onlyWithActiveClaim() {
         if (_claimingActive == 0) {
@@ -63,12 +63,12 @@ abstract contract BaseGem is
     ) public view virtual returns (string memory) {
         _requireMinted(tokenId);
         // We assume this alway has at least 1 element, since we add it on mint and it can only be replaced, not removed
-        uint16[] memory priorities = getActiveAssetPriorities(tokenId);
+        uint64[] memory priorities = getActiveAssetPriorities(tokenId);
         uint256 len = priorities.length;
-        uint16 maxPriority = _LOWEST_POSSIBLE_PRIORITY;
+        uint64 maxPriority = _LOWEST_POSSIBLE_PRIORITY;
         uint64 maxPriorityIndex;
         for (uint64 i; i < len; ) {
-            uint16 currentPrio = priorities[i];
+            uint64 currentPrio = priorities[i];
             if (currentPrio < maxPriority) {
                 maxPriority = currentPrio;
                 maxPriorityIndex = i;

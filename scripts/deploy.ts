@@ -11,7 +11,10 @@ import * as C from './constants';
 import addMainAssets from './addMainAssets';
 import configureCatalog from './configureCatalog';
 
-async function deployContracts(fromTesting: boolean): Promise<{
+async function deployContracts(
+  rcrtAddres: string,
+  fromTesting: boolean,
+): Promise<{
   snakeSoldiers: SnakeSoldier;
   elementGem: ElementGem;
   factionGem: FactionGem;
@@ -30,7 +33,7 @@ async function deployContracts(fromTesting: boolean): Promise<{
   const snakeCatalogFactory = await ethers.getContractFactory('SnakeCatalog');
 
   const snakeSoldiers = <SnakeSoldier>(
-    await snakeSoldierFactory.deploy(C.SNAKE_METADATA_URI, C.MAX_GIFTS_PER_PHASE)
+    await snakeSoldierFactory.deploy(C.SNAKE_METADATA_URI, C.MAX_GIFTS_PER_PHASE, rcrtAddres)
   );
 
   const passport = <SerpenTerraPassport>(

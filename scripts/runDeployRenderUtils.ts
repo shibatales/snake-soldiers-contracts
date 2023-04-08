@@ -4,7 +4,7 @@ import { RMRKEquipRenderUtils } from '../typechain-types';
 async function main() {
   const renderUtilsFactory = await ethers.getContractFactory('RMRKEquipRenderUtils');
   const renderUtils: RMRKEquipRenderUtils = await renderUtilsFactory.deploy();
-  await renderUtils.deployed()
+  await renderUtils.deployed();
   console.log('Render Utils deployed at ', renderUtils.address);
 
   await run('verify:verify', {

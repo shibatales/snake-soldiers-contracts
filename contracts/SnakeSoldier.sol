@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.18;
 
 import "@rmrk-team/evm-contracts/contracts/RMRK/access/Ownable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "./IERC20Min.sol";
 
 error ElementAlreadyRevealed();
 error MaxGiftsPerPhaseReached();
@@ -13,6 +14,8 @@ error MintOverMax();
 error MintUnderpriced();
 error MintZero();
 error SaleNotOpen();
+error SalePaused();
+error MustBeRecruited();
 error MaxPhaseReached();
 error NextPhasePriceMustBeEqualOrHigher();
 
@@ -41,7 +44,7 @@ contract SnakeSoldier is
     uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
     uint256 private constant _MAX_SUPPLY_PER_PHASE_GENERALS = 5; // A maximum possible of 5*4=20
     uint256 private constant _MAX_PHASES = 4;
-    uint16 private constant _LOWEST_POSSIBLE_PRIORITY = 2 ^ (16 - 1);
+    uint64 private constant _LOWEST_POSSIBLE_PRIORITY = (2 ^ 64) - 1;
 
     uint64 private constant _ASSET_ID_SOLDIER_EGG = 1;
     uint64 private constant _ASSET_ID_COMMANDER_EGG = 2;
@@ -73,23 +76,27 @@ contract SnakeSoldier is
     mapping(uint256 => uint256) private _elementRevealed;
     mapping(Rank => uint256) private _totalSupply;
     uint256 private _phase;
-    bool private _phasesLocked;
-
+    uint256 private _phasesLocked;
+    uint256 private _paused;
     uint256 private _totalAssets;
     mapping(uint64 => uint256) private _isTokenAssetEnumerated;
     mapping(address => bool) private _autoAcceptCollection;
     uint256 private _totalGifts;
     uint256 private immutable _maxGiftsPerPhase;
+    address immutable _rcrtToken;
+    uint256 private _onlyRecruited = 1;
 
     constructor(
         string memory collectionMetadata_,
-        uint256 maxGiftsPerPhase_
+        uint256 maxGiftsPerPhase_,
+        address rcrtToken
     )
         RMRKCollectionMetadata(collectionMetadata_)
         RMRKRoyalties(_msgSender(), 500) // 500 -> 5%
         RMRKEquippable("Snake Soldiers", "SS")
     {
         _maxGiftsPerPhase = maxGiftsPerPhase_;
+        _rcrtToken = rcrtToken;
     }
 
     function updateRoyaltyRecipient(
@@ -103,12 +110,12 @@ contract SnakeSoldier is
     ) public view virtual returns (string memory) {
         _requireMinted(tokenId);
         // We assume this alway has at least 1 element, since we add it on mint and it can only be replaced, not removed
-        uint16[] memory priorities = getActiveAssetPriorities(tokenId);
+        uint64[] memory priorities = getActiveAssetPriorities(tokenId);
         uint256 len = priorities.length;
-        uint16 maxPriority = _LOWEST_POSSIBLE_PRIORITY;
+        uint64 maxPriority = _LOWEST_POSSIBLE_PRIORITY;
         uint64 maxPriorityIndex;
         for (uint64 i; i < len; ) {
-            uint16 currentPrio = priorities[i];
+            uint64 currentPrio = priorities[i];
             if (currentPrio < maxPriority) {
                 maxPriority = currentPrio;
                 maxPriorityIndex = i;
@@ -224,12 +231,21 @@ contract SnakeSoldier is
                 _MAX_SUPPLY_PER_PHASE_GENERALS) * _phase;
     }
 
+    function setPaused(bool paused) external onlyOwner {
+        _paused = paused ? 1 : 0;
+    }
+
+    function openForAll() external onlyOwner {
+        _onlyRecruited = 0;
+    }
+
     function enableNextPhase(
         uint256 pricePerSoldier,
         uint256 pricePerCommander,
         uint256 pricePerGeneral
     ) external onlyOwner {
-        if (_phase == _MAX_PHASES || _phasesLocked) revert MaxPhaseReached();
+        if (_phase == _MAX_PHASES || _phasesLocked == 1)
+            revert MaxPhaseReached();
 
         if (
             _pricePerSoldier > pricePerSoldier ||
@@ -244,7 +260,7 @@ contract SnakeSoldier is
     }
 
     function lockPhases() external onlyOwner {
-        _phasesLocked = true;
+        _phasesLocked = 1;
     }
 
     function _rankOffset(Rank rank) private pure returns (uint256) {
@@ -272,13 +288,20 @@ contract SnakeSoldier is
 
         if (_totalGifts == _maxGiftsPerPhase * _phase)
             revert MaxGiftsPerPhaseReached();
-        _totalGifts += 1;
+        unchecked {
+            ++_totalGifts;
+        }
 
         _innerMint(to, 1, rank);
     }
 
     function _mintChecks(uint256 numToMint, Rank rank) private view {
         if (_phase == 0) revert SaleNotOpen();
+        if (_paused == 1) revert SalePaused();
+        if (
+            _onlyRecruited == 1 &&
+            IERC20Min(_rcrtToken).balanceOf(_msgSender()) == 0
+        ) revert MustBeRecruited();
         if (numToMint == uint256(0)) revert MintZero();
         if (numToMint + totalSupply(rank) > maxSupply(rank))
             revert MintOverMax();
@@ -327,14 +350,15 @@ contract SnakeSoldier is
         // The "+ tokenId % 4" part, sets the asset for the right element
         if (tokenId > _SOLDIERS_OFFSET) {
             oldAssetId = _ASSET_ID_SOLDIER_EGG;
-            newAssetId = _ASSET_ID_SOLDIER_EGG_FIRE + uint64(tokenId % 4);
+            newAssetId = _ASSET_ID_SOLDIER_EGG_FIRE;
         } else if (tokenId > _COMMANDERS_OFFSET) {
             oldAssetId = _ASSET_ID_COMMANDER_EGG;
-            newAssetId = _ASSET_ID_COMMANDER_EGG_FIRE + uint64(tokenId % 4);
+            newAssetId = _ASSET_ID_COMMANDER_EGG_FIRE;
         } else {
             oldAssetId = _ASSET_ID_GENERAL_EGG;
-            newAssetId = _ASSET_ID_GENERAL_EGG_FIRE + uint64(tokenId % 4);
+            newAssetId = _ASSET_ID_GENERAL_EGG_FIRE;
         }
+        newAssetId += uint64(tokenId % 4);
         _addAssetToToken(tokenId, newAssetId, oldAssetId);
         _acceptAsset(tokenId, 0, newAssetId);
     }
