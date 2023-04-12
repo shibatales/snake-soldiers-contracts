@@ -339,28 +339,35 @@ contract SnakeSoldier is
         require(success, "Transfer failed.");
     }
 
-    function revealElement(
-        uint256 tokenId
-    ) external onlyApprovedForAssetsOrOwner(tokenId) {
-        if (_elementRevealed[tokenId] == 1) revert ElementAlreadyRevealed();
-        _elementRevealed[tokenId] = 1;
+    function revealElements(uint256[] calldata tokenIds) external {
+        uint256 length = tokenIds.length;
         uint64 newAssetId;
         uint64 oldAssetId;
+        for (uint256 i; i < length; ) {
+            uint256 tokenId = tokenIds[i];
+            if (!_isApprovedForAssetsOrOwner(_msgSender(), tokenId))
+                revert RMRKNotApprovedForAssetsOrOwner();
+            if (_elementRevealed[tokenId] == 1) revert ElementAlreadyRevealed();
+            _elementRevealed[tokenId] = 1;
 
-        // The "+ tokenId % 4" part, sets the asset for the right element
-        if (tokenId > _SOLDIERS_OFFSET) {
-            oldAssetId = _ASSET_ID_SOLDIER_EGG;
-            newAssetId = _ASSET_ID_SOLDIER_EGG_FIRE;
-        } else if (tokenId > _COMMANDERS_OFFSET) {
-            oldAssetId = _ASSET_ID_COMMANDER_EGG;
-            newAssetId = _ASSET_ID_COMMANDER_EGG_FIRE;
-        } else {
-            oldAssetId = _ASSET_ID_GENERAL_EGG;
-            newAssetId = _ASSET_ID_GENERAL_EGG_FIRE;
+            // The "+ tokenId % 4" part, sets the asset for the right element
+            if (tokenId > _SOLDIERS_OFFSET) {
+                oldAssetId = _ASSET_ID_SOLDIER_EGG;
+                newAssetId = _ASSET_ID_SOLDIER_EGG_FIRE;
+            } else if (tokenId > _COMMANDERS_OFFSET) {
+                oldAssetId = _ASSET_ID_COMMANDER_EGG;
+                newAssetId = _ASSET_ID_COMMANDER_EGG_FIRE;
+            } else {
+                oldAssetId = _ASSET_ID_GENERAL_EGG;
+                newAssetId = _ASSET_ID_GENERAL_EGG_FIRE;
+            }
+            newAssetId += uint64(tokenId % 4);
+            _addAssetToToken(tokenId, newAssetId, oldAssetId);
+            _acceptAsset(tokenId, 0, newAssetId);
+            unchecked {
+                ++i;
+            }
         }
-        newAssetId += uint64(tokenId % 4);
-        _addAssetToToken(tokenId, newAssetId, oldAssetId);
-        _acceptAsset(tokenId, 0, newAssetId);
     }
 
     function setAutoAcceptCollection(

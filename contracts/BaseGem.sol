@@ -160,7 +160,7 @@ abstract contract BaseGem is
     ) external onlyWithActiveClaim {
         uint256 length = snakeTokenIds.length;
         for (uint256 i; i < length; ) {
-            _claim(snakeTokenIds[0]);
+            _claim(snakeTokenIds[i]);
             unchecked {
                 ++i;
             }

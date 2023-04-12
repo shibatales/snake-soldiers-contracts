@@ -63,7 +63,7 @@ describe('SnakeSoldiers', async () => {
   let elementGem: ElementGem;
   let factionGem: FactionGem;
   let skillGem: SkillGem;
-  // let passport: SerpenTerraPassport;
+  let passport: SerpenTerraPassport;
   let catalog: SnakeCatalog;
   let renderUtils: RMRKEquipRenderUtils;
   let rcrt: RecruitTelegram;
@@ -76,7 +76,7 @@ describe('SnakeSoldiers', async () => {
   beforeEach(async () => {
     [issuer, buyer, buyer2, notOwner, ...addrs] = await ethers.getSigners();
     // Note: Fixtures are a great way to set up your tests. Using them speeds up your tests considerably.
-    ({ snakeSoldiers, elementGem, factionGem, skillGem, catalog, renderUtils, rcrt } =
+    ({ snakeSoldiers, elementGem, factionGem, skillGem, passport, catalog, renderUtils, rcrt } =
       await loadFixture(fullFixture));
   });
 
@@ -317,13 +317,13 @@ describe('SnakeSoldiers', async () => {
         beforeEach(async () => {
           await snakeSoldiers
             .connect(buyer)
-            .mint(buyer.address, 4, SOLDIER_RANK, { value: SOLDIER_PRICE.mul(4) });
+            .mint(buyer.address, 6, SOLDIER_RANK, { value: SOLDIER_PRICE.mul(6) });
           await snakeSoldiers
             .connect(buyer)
-            .mint(buyer.address, 2, COMMANDER_RANK, { value: COMMANDER_PRICE.mul(2) });
+            .mint(buyer.address, 5, COMMANDER_RANK, { value: COMMANDER_PRICE.mul(5) });
           await snakeSoldiers
             .connect(buyer)
-            .mint(buyer.address, 1, GENERAL_RANK, { value: GENERAL_PRICE });
+            .mint(buyer.address, 4, GENERAL_RANK, { value: GENERAL_PRICE.mul(4) });
           await snakeSoldiers
             .connect(buyer2)
             .mint(buyer2.address, 4, SOLDIER_RANK, { value: SOLDIER_PRICE.mul(4) });
@@ -340,7 +340,7 @@ describe('SnakeSoldiers', async () => {
         });
 
         it('can get total general supply', async function () {
-          expect(await snakeSoldiers['totalSupply()']()).to.equal(11);
+          expect(await snakeSoldiers['totalSupply()']()).to.equal(19);
         });
 
         it('can get max supply per rank', async function () {
@@ -350,9 +350,9 @@ describe('SnakeSoldiers', async () => {
         });
 
         it('can get total supply per rank', async function () {
-          expect(await snakeSoldiers['totalSupply(uint8)'](SOLDIER_RANK)).to.equal(8);
-          expect(await snakeSoldiers['totalSupply(uint8)'](COMMANDER_RANK)).to.equal(2);
-          expect(await snakeSoldiers['totalSupply(uint8)'](GENERAL_RANK)).to.equal(1);
+          expect(await snakeSoldiers['totalSupply(uint8)'](SOLDIER_RANK)).to.equal(10);
+          expect(await snakeSoldiers['totalSupply(uint8)'](COMMANDER_RANK)).to.equal(5);
+          expect(await snakeSoldiers['totalSupply(uint8)'](GENERAL_RANK)).to.equal(4);
         });
 
         it('can add regular assets', async function () {
@@ -467,7 +467,7 @@ describe('SnakeSoldiers', async () => {
           expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 1)).to.eql([
             [ASSET_ID_GENERAL_EGG, bn(0), `${BASE_URI}/eggs/general/generic`],
           ]);
-          await snakeSoldiers.connect(buyer).revealElement(1);
+          await snakeSoldiers.connect(buyer).revealElements([1]);
           expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 1)).to.eql([
             [ASSET_ID_GENERAL_EGG_EARTH, bn(0), `${BASE_URI}/eggs/general/earth`],
           ]);
@@ -476,7 +476,7 @@ describe('SnakeSoldiers', async () => {
           expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 21)).to.eql([
             [ASSET_ID_COMMANDER_EGG, bn(0), `${BASE_URI}/eggs/commander/generic`],
           ]);
-          await snakeSoldiers.connect(buyer).revealElement(21);
+          await snakeSoldiers.connect(buyer).revealElements([21]);
           expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 21)).to.eql([
             [ASSET_ID_COMMANDER_EGG_EARTH, bn(0), `${BASE_URI}/eggs/commander/earth`],
           ]);
@@ -485,10 +485,26 @@ describe('SnakeSoldiers', async () => {
           expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 201)).to.eql([
             [ASSET_ID_SOLDIER_EGG, bn(0), `${BASE_URI}/eggs/soldier/generic`],
           ]);
-          await snakeSoldiers.connect(buyer).revealElement(201);
-          await snakeSoldiers.connect(buyer).revealElement(202);
-          await snakeSoldiers.connect(buyer).revealElement(203);
-          await snakeSoldiers.connect(buyer).revealElement(204);
+          await snakeSoldiers.connect(buyer).revealElements([201]);
+          await snakeSoldiers.connect(buyer).revealElements([202]);
+          await snakeSoldiers.connect(buyer).revealElements([203]);
+          await snakeSoldiers.connect(buyer).revealElements([204]);
+          expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 201)).to.eql([
+            [ASSET_ID_SOLDIER_EGG_EARTH, bn(0), `${BASE_URI}/eggs/soldier/earth`],
+          ]);
+          expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 202)).to.eql([
+            [ASSET_ID_SOLDIER_EGG_WATER, bn(0), `${BASE_URI}/eggs/soldier/water`],
+          ]);
+          expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 203)).to.eql([
+            [ASSET_ID_SOLDIER_EGG_AIR, bn(0), `${BASE_URI}/eggs/soldier/air`],
+          ]);
+          expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 204)).to.eql([
+            [ASSET_ID_SOLDIER_EGG_FIRE, bn(0), `${BASE_URI}/eggs/soldier/fire`],
+          ]);
+        });
+
+        it('can reveal many eggs', async function () {
+          await snakeSoldiers.connect(buyer).revealElements([201, 202, 203, 204]);
           expect(await renderUtils.getExtendedActiveAssets(snakeSoldiers.address, 201)).to.eql([
             [ASSET_ID_SOLDIER_EGG_EARTH, bn(0), `${BASE_URI}/eggs/soldier/earth`],
           ]);
@@ -505,66 +521,15 @@ describe('SnakeSoldiers', async () => {
 
         it('cannot reveal egg if not token owner', async function () {
           await expect(
-            snakeSoldiers.connect(buyer2).revealElement(1),
+            snakeSoldiers.connect(buyer2).revealElements([1]),
           ).to.be.revertedWithCustomError(snakeSoldiers, 'RMRKNotApprovedForAssetsOrOwner');
         });
 
         it('cannot reveal egg twice', async function () {
-          await snakeSoldiers.connect(buyer).revealElement(1);
-          await expect(snakeSoldiers.connect(buyer).revealElement(1)).to.be.revertedWithCustomError(
-            snakeSoldiers,
-            'ElementAlreadyRevealed',
-          );
-        });
-
-        it('cannot claim gems if claim is not active', async function () {
-          await expect(elementGem.connect(buyer).claim(1)).to.be.revertedWithCustomError(
-            elementGem,
-            'ClaimingNotActive',
-          );
-        });
-
-        // Note: Some times, I will just test a few things at once because they all depend on the exact same setup
-        it('can claim gems', async function () {
-          const tokenId = 1;
-          // All snakes use the same asset it, but the metadata varies according to type
-          const gemAssetId = 1;
-          await elementGem.setClaimActive();
-          await factionGem.setClaimActive();
-          await skillGem.setClaimActive();
-
-          await elementGem.connect(buyer).claim(tokenId);
-          await factionGem.connect(buyer).claim(tokenId);
-          await skillGem.connect(buyer).claim(tokenId);
-
-          expect(await elementGem.claimed(tokenId)).to.eql(true);
-          expect(await factionGem.claimed(tokenId)).to.eql(true);
-          expect(await skillGem.claimed(tokenId)).to.eql(true);
-          expect(await snakeSoldiers.childrenOf(tokenId)).to.eql([
-            // It mints the same ID on the gem
-            [bn(tokenId), elementGem.address],
-            [bn(tokenId), factionGem.address],
-            [bn(tokenId), skillGem.address],
-          ]);
-
-          expect(await elementGem.getAssetMetadata(tokenId, gemAssetId)).to.eql(
-            `${BASE_URI}/gems/elements/earth`,
-          );
-          expect(await factionGem.getAssetMetadata(tokenId, gemAssetId)).to.eql(
-            `${BASE_URI}/gems/factions/mountain`,
-          );
-          expect(await skillGem.getAssetMetadata(tokenId, gemAssetId)).to.eql(
-            `${BASE_URI}/gems/skills/tank`,
-          );
-        });
-
-        it('does not autoaccept NFTs which are not set to be auto accepted', async function () {
-          await snakeSoldiers
-            .connect(buyer)
-            .nestTransferFrom(buyer.address, snakeSoldiers.address, 201, 1, '0x');
-          expect(await snakeSoldiers.pendingChildrenOf(1)).to.eql([
-            [bn(201), snakeSoldiers.address],
-          ]);
+          await snakeSoldiers.connect(buyer).revealElements([1]);
+          await expect(
+            snakeSoldiers.connect(buyer).revealElements([1]),
+          ).to.be.revertedWithCustomError(snakeSoldiers, 'ElementAlreadyRevealed');
         });
 
         it('cannot withdraw raised funds if not owner', async function () {
@@ -581,9 +546,9 @@ describe('SnakeSoldiers', async () => {
           const beneficiary = addrs[0];
           const beneficiaryBalance = await ethers.provider.getBalance(beneficiary.address);
 
-          const expectedBalance = SOLDIER_PRICE.mul(8)
-            .add(COMMANDER_PRICE.mul(2))
-            .add(GENERAL_PRICE);
+          const expectedBalance = SOLDIER_PRICE.mul(10)
+            .add(COMMANDER_PRICE.mul(5))
+            .add(GENERAL_PRICE.mul(4));
           expect(await ethers.provider.getBalance(snakeSoldiers.address)).to.eql(expectedBalance);
 
           await snakeSoldiers.withdrawRaised(beneficiary.address, expectedBalance);
@@ -593,6 +558,254 @@ describe('SnakeSoldiers', async () => {
           expect(await ethers.provider.getBalance(beneficiary.address)).to.eql(
             expectedBeneficiaryBalance,
           );
+        });
+
+        describe('Gems', function () {
+          it('has support for soulbound interface on faction and element gems', async function () {
+            expect(await elementGem.supportsInterface('0xa7331ab1')).to.eql(true);
+            expect(await factionGem.supportsInterface('0xa7331ab1')).to.eql(true);
+            expect(await skillGem.supportsInterface('0xa7331ab1')).to.eql(false);
+          });
+
+          it('has support for all legos on gems', async function () {
+            expect(await elementGem.supportsInterface('0x28bc9ae4')).to.eql(true);
+            expect(await elementGem.supportsInterface('0x06b4329a')).to.eql(true);
+            expect(await elementGem.supportsInterface('0x42b0e56f')).to.eql(true);
+
+            expect(await factionGem.supportsInterface('0x28bc9ae4')).to.eql(true);
+            expect(await factionGem.supportsInterface('0x06b4329a')).to.eql(true);
+            expect(await factionGem.supportsInterface('0x42b0e56f')).to.eql(true);
+
+            expect(await skillGem.supportsInterface('0x28bc9ae4')).to.eql(true);
+            expect(await skillGem.supportsInterface('0x06b4329a')).to.eql(true);
+            expect(await skillGem.supportsInterface('0x42b0e56f')).to.eql(true);
+          });
+
+          it('cannot claim gems if claim is not active', async function () {
+            await expect(elementGem.connect(buyer).claim(1)).to.be.revertedWithCustomError(
+              elementGem,
+              'ClaimingNotActive',
+            );
+          });
+
+          // Note: Some times, I will just test a few things at once because they all depend on the exact same setup
+          it('can claim gems', async function () {
+            const tokenId = 1;
+
+            expect(await elementGem.isClaimActive()).to.eql(false);
+
+            await elementGem.setClaimActive();
+            await factionGem.setClaimActive();
+            await skillGem.setClaimActive();
+
+            expect(await elementGem.isClaimActive()).to.eql(true);
+
+            await elementGem.connect(buyer).claim(tokenId);
+            await factionGem.connect(buyer).claim(tokenId);
+            await skillGem.connect(buyer).claim(tokenId);
+
+            expect(await elementGem.claimed(tokenId)).to.eql(true);
+            expect(await factionGem.claimed(tokenId)).to.eql(true);
+            expect(await skillGem.claimed(tokenId)).to.eql(true);
+            expect(await snakeSoldiers.childrenOf(tokenId)).to.eql([
+              // It mints the same ID on the gem
+              [bn(tokenId), elementGem.address],
+              [bn(tokenId), factionGem.address],
+              [bn(tokenId), skillGem.address],
+            ]);
+
+            expect(await elementGem.tokenURI(tokenId)).to.eql(`${BASE_URI}/gems/elements/earth`);
+            expect(await factionGem.tokenURI(tokenId)).to.eql(`${BASE_URI}/gems/factions/mountain`);
+            expect(await skillGem.tokenURI(tokenId)).to.eql(`${BASE_URI}/gems/skills/tank`);
+          });
+
+          it('does not autoaccept NFTs which are not set to be auto accepted', async function () {
+            await snakeSoldiers
+              .connect(buyer)
+              .nestTransferFrom(buyer.address, snakeSoldiers.address, 201, 1, '0x');
+            expect(await snakeSoldiers.pendingChildrenOf(1)).to.eql([
+              [bn(201), snakeSoldiers.address],
+            ]);
+          });
+
+          it('cannot transfer faction gem if not passport holder', async function () {
+            await factionGem.setClaimActive();
+            await factionGem.connect(buyer).claim(1);
+
+            await expect(
+              snakeSoldiers
+                .connect(buyer)
+                .transferChild(1, buyer.address, 0, 0, factionGem.address, 1, false, '0x'),
+            ).to.be.revertedWithCustomError(factionGem, 'RMRKCannotTransferSoulbound');
+          });
+
+          it('can transfer faction gem if passport holder and passport is burned', async function () {
+            await factionGem.setClaimActive();
+            await factionGem.connect(buyer).claim(1);
+            await passport.mint(buyer.address, 1);
+
+            await snakeSoldiers
+              .connect(buyer)
+              .transferChild(1, buyer.address, 0, 0, factionGem.address, 1, false, '0x');
+            expect(await factionGem.balanceOf(buyer.address)).to.eql(bn(1));
+            expect(await passport.balanceOf(buyer.address)).to.eql(bn(0));
+          });
+
+          describe('With claimed gems', function () {
+            beforeEach(async function () {
+              const tokenIds = [1, 2, 3, 4, 21, 22, 23, 24, 25, 201, 202, 203, 204, 205, 206];
+              await elementGem.setClaimActive();
+              await factionGem.setClaimActive();
+              await skillGem.setClaimActive();
+
+              await elementGem.connect(buyer).claimMany(tokenIds);
+              await factionGem.connect(buyer).claimMany(tokenIds);
+              await skillGem.connect(buyer).claimMany(tokenIds);
+
+              expect(await elementGem.totalSupply()).to.eql(bn(15));
+              expect(await elementGem.maxSupply()).to.eql(bn(5000));
+            });
+
+            it('assigns gems to generals as expected (full match)', async function () {
+              expect(await elementGem.getAssetMetadata(1, 1)).to.eql(
+                `${BASE_URI}/gems/elements/earth`,
+              );
+              expect(await factionGem.getAssetMetadata(1, 1)).to.eql(
+                `${BASE_URI}/gems/factions/mountain`,
+              );
+              expect(await skillGem.getAssetMetadata(1, 1)).to.eql(`${BASE_URI}/gems/skills/tank`);
+
+              expect(await elementGem.getAssetMetadata(2, 1)).to.eql(
+                `${BASE_URI}/gems/elements/water`,
+              );
+              expect(await factionGem.getAssetMetadata(2, 1)).to.eql(
+                `${BASE_URI}/gems/factions/islands`,
+              );
+              expect(await skillGem.getAssetMetadata(2, 1)).to.eql(
+                `${BASE_URI}/gems/skills/healer`,
+              );
+
+              expect(await elementGem.getAssetMetadata(3, 1)).to.eql(
+                `${BASE_URI}/gems/elements/air`,
+              );
+              expect(await factionGem.getAssetMetadata(3, 1)).to.eql(
+                `${BASE_URI}/gems/factions/valley`,
+              );
+              expect(await skillGem.getAssetMetadata(3, 1)).to.eql(
+                `${BASE_URI}/gems/skills/sniper`,
+              );
+
+              expect(await elementGem.getAssetMetadata(4, 1)).to.eql(
+                `${BASE_URI}/gems/elements/fire`,
+              );
+              expect(await factionGem.getAssetMetadata(4, 1)).to.eql(
+                `${BASE_URI}/gems/factions/desert`,
+              );
+              expect(await skillGem.getAssetMetadata(4, 1)).to.eql(
+                `${BASE_URI}/gems/skills/combat`,
+              );
+            });
+
+            it('assigns gems to commanders as expected (skill matches element)', async function () {
+              expect(await elementGem.getAssetMetadata(21, 1)).to.eql(
+                `${BASE_URI}/gems/elements/earth`,
+              );
+              expect(await factionGem.getAssetMetadata(21, 1)).to.eql(
+                `${BASE_URI}/gems/factions/mountain`,
+              );
+              expect(await skillGem.getAssetMetadata(21, 1)).to.eql(`${BASE_URI}/gems/skills/tank`);
+
+              expect(await elementGem.getAssetMetadata(22, 1)).to.eql(
+                `${BASE_URI}/gems/elements/water`,
+              );
+              expect(await factionGem.getAssetMetadata(22, 1)).to.eql(
+                `${BASE_URI}/gems/factions/islands`,
+              );
+              expect(await skillGem.getAssetMetadata(22, 1)).to.eql(
+                `${BASE_URI}/gems/skills/healer`,
+              );
+
+              expect(await elementGem.getAssetMetadata(23, 1)).to.eql(
+                `${BASE_URI}/gems/elements/air`,
+              );
+              expect(await factionGem.getAssetMetadata(23, 1)).to.eql(
+                `${BASE_URI}/gems/factions/valley`,
+              );
+              expect(await skillGem.getAssetMetadata(23, 1)).to.eql(
+                `${BASE_URI}/gems/skills/sniper`,
+              );
+
+              expect(await elementGem.getAssetMetadata(24, 1)).to.eql(
+                `${BASE_URI}/gems/elements/fire`,
+              );
+              expect(await factionGem.getAssetMetadata(24, 1)).to.eql(
+                `${BASE_URI}/gems/factions/forest`,
+              );
+              expect(await skillGem.getAssetMetadata(24, 1)).to.eql(
+                `${BASE_URI}/gems/skills/combat`,
+              );
+
+              expect(await elementGem.getAssetMetadata(25, 1)).to.eql(
+                `${BASE_URI}/gems/elements/earth`,
+              );
+              expect(await factionGem.getAssetMetadata(25, 1)).to.eql(
+                `${BASE_URI}/gems/factions/desert`,
+              );
+              expect(await skillGem.getAssetMetadata(25, 1)).to.eql(`${BASE_URI}/gems/skills/tank`);
+            });
+
+            it('assigns gems to soldiers as expected', async function () {
+              expect(await elementGem.getAssetMetadata(201, 1)).to.eql(
+                `${BASE_URI}/gems/elements/earth`,
+              );
+              expect(await factionGem.getAssetMetadata(201, 1)).to.eql(
+                `${BASE_URI}/gems/factions/mountain`,
+              );
+              expect(await skillGem.getAssetMetadata(201, 1)).to.eql(
+                `${BASE_URI}/gems/skills/combat`,
+              );
+
+              expect(await elementGem.getAssetMetadata(202, 1)).to.eql(
+                `${BASE_URI}/gems/elements/water`,
+              );
+              expect(await factionGem.getAssetMetadata(202, 1)).to.eql(
+                `${BASE_URI}/gems/factions/islands`,
+              );
+              expect(await skillGem.getAssetMetadata(202, 1)).to.eql(
+                `${BASE_URI}/gems/skills/tank`,
+              );
+
+              expect(await elementGem.getAssetMetadata(203, 1)).to.eql(
+                `${BASE_URI}/gems/elements/air`,
+              );
+              expect(await factionGem.getAssetMetadata(203, 1)).to.eql(
+                `${BASE_URI}/gems/factions/valley`,
+              );
+              expect(await skillGem.getAssetMetadata(203, 1)).to.eql(
+                `${BASE_URI}/gems/skills/tank`,
+              );
+
+              expect(await elementGem.getAssetMetadata(204, 1)).to.eql(
+                `${BASE_URI}/gems/elements/fire`,
+              );
+              expect(await factionGem.getAssetMetadata(204, 1)).to.eql(
+                `${BASE_URI}/gems/factions/forest`,
+              );
+              expect(await skillGem.getAssetMetadata(204, 1)).to.eql(
+                `${BASE_URI}/gems/skills/healer`,
+              );
+
+              expect(await elementGem.getAssetMetadata(205, 1)).to.eql(
+                `${BASE_URI}/gems/elements/earth`,
+              );
+              expect(await factionGem.getAssetMetadata(205, 1)).to.eql(
+                `${BASE_URI}/gems/factions/desert`,
+              );
+              expect(await skillGem.getAssetMetadata(205, 1)).to.eql(
+                `${BASE_URI}/gems/skills/healer`,
+              );
+            });
+          });
         });
       });
     });
