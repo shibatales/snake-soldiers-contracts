@@ -184,7 +184,7 @@ contract SnakeSoldier is
     )
         public
         view
-        override(AbstractMultiAsset, IRMRKMultiAsset)
+        override(AbstractMultiAsset, IERC5773)
         returns (string memory)
     {
         string memory metaUri = super.getAssetMetadata(tokenId, assetId);

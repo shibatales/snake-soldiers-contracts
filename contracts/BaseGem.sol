@@ -178,7 +178,7 @@ abstract contract BaseGem is
         _claimed[snakeTokenId] = 1;
         _totalSupply += 1;
 
-        address owner = IRMRKNestable(_snakeSoldiers).ownerOf(snakeTokenId);
+        address owner = IERC6059(_snakeSoldiers).ownerOf(snakeTokenId);
         if (_msgSender() != owner) revert CannotMintGemForNotOwnedToken();
         _nestMint(_snakeSoldiers, snakeTokenId, snakeTokenId, "");
         _addAssetToToken(snakeTokenId, _MAIN_ASSET_ID, uint64(0));
@@ -191,7 +191,7 @@ abstract contract BaseGem is
     )
         public
         view
-        override(AbstractMultiAsset, IRMRKMultiAsset)
+        override(AbstractMultiAsset, IERC5773)
         returns (string memory)
     {
         string memory baseMetaUri = super.getAssetMetadata(tokenId, assetId);
