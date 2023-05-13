@@ -40,10 +40,11 @@ contract SnakeSoldier is
         General
     }
 
-    uint256 private constant _MAX_SUPPLY_PER_PHASE_SOLDIERS = 1200; // A maximum possible of 1200*4=4800
-    uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 45; // A maximum possible of 45*4=180
-    uint256 private constant _MAX_SUPPLY_PER_PHASE_GENERALS = 5; // A maximum possible of 5*4=20
-    uint256 private constant _MAX_PHASES = 4;
+    uint256 private constant _MAX_SUPPLY_PER_PHASE_SOLDIERS = 240; // A maximum possible of 240*20=4800
+    uint256 private constant _MAX_SUPPLY_PER_PHASE_COMMANDERS = 9; // A maximum possible of 9*20=180
+    uint256 private constant _MAX_SUPPLY_PER_PHASE_GENERALS = 1; // A maximum possible of 1*20=20
+    uint256 private constant _MAX_PHASES = 20;
+
     uint64 private constant _LOWEST_POSSIBLE_PRIORITY = (2 ^ 64) - 1;
 
     uint64 private constant _ASSET_ID_SOLDIER_EGG = 1;

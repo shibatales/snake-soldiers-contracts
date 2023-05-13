@@ -1,12 +1,14 @@
-import { bn, BASE_URI } from './constants';
+import { bn } from './constants';
+
+const BASE_URI_CATALOG = 'ipfs//'; // TODO
 
 const SLOT_ELEMENT_GEM_ID = bn(1);
 const SLOT_SKILL_GEM_ID = bn(2);
 const SLOT_FACTION_GEM_ID = bn(3);
 
-const SLOT_ELEMENT_GEM_METADATA_URI = `${BASE_URI}/slotElementGemMetadata`;
-const SLOT_SKILL_GEM_METADATA_URI = `${BASE_URI}/slotSkillGemMetadata`;
-const SLOT_FACTION_GEM_METADATA_URI = `${BASE_URI}/slotFactionGemMetadata`;
+const SLOT_ELEMENT_GEM_METADATA_URI = `${BASE_URI_CATALOG}/slotElementGemMetadata`;
+const SLOT_SKILL_GEM_METADATA_URI = `${BASE_URI_CATALOG}/slotSkillGemMetadata`;
+const SLOT_FACTION_GEM_METADATA_URI = `${BASE_URI_CATALOG}/slotFactionGemMetadata`;
 
 const HEAD_COLOR_1_ID = bn(11);
 const HEAD_COLOR_2_ID = bn(12);

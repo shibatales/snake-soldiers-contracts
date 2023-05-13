@@ -20,7 +20,7 @@ async function deployContracts(
   factionGem: FactionGem;
   skillGem: SkillGem;
   passport: SerpenTerraPassport;
-  catalog: SnakeCatalog;
+  // catalog: SnakeCatalog;
 }> {
   if (!fromTesting) {
     console.log('Deploying smart contracts');
@@ -30,10 +30,14 @@ async function deployContracts(
   const factionGemFactory = await ethers.getContractFactory('FactionGem');
   const skillGemFactory = await ethers.getContractFactory('SkillGem');
   const serpenTerraPassportFactory = await ethers.getContractFactory('SerpenTerraPassport');
-  const snakeCatalogFactory = await ethers.getContractFactory('SnakeCatalog');
+  // const snakeCatalogFactory = await ethers.getContractFactory('SnakeCatalog');
 
   const snakeSoldiers = <SnakeSoldier>(
-    await snakeSoldierFactory.deploy(C.SNAKE_METADATA_URI, C.MAX_GIFTS_PER_PHASE, rcrtAddres)
+    await snakeSoldierFactory.deploy(
+      C.SNAKE_SOLDIER_COLLECTION_METADATA,
+      C.MAX_GIFTS_PER_PHASE,
+      rcrtAddres,
+    )
   );
 
   const passport = <SerpenTerraPassport>(
@@ -42,28 +46,32 @@ async function deployContracts(
 
   const elementGem = <ElementGem>(
     await elementGemFactory.deploy(
-      C.ELEMENT_GEM_METADATA,
+      C.ELEMENT_GEM_COLLECTION_METADATA,
       snakeSoldiers.address,
       C.MAX_SUPPLY_FOR_GEMS,
     )
   );
 
   const skillGem = <SkillGem>(
-    await skillGemFactory.deploy(C.SKILL_GEM_METADATA, snakeSoldiers.address, C.MAX_SUPPLY_FOR_GEMS)
+    await skillGemFactory.deploy(
+      C.SKILL_GEM_COLLECTION_METADATA,
+      snakeSoldiers.address,
+      C.MAX_SUPPLY_FOR_GEMS,
+    )
   );
 
   const factionGem = <FactionGem>(
     await factionGemFactory.deploy(
-      C.FACTION_GEM_METADATA,
+      C.FACTION_GEM_COLLECTION_METADATA,
       snakeSoldiers.address,
       C.MAX_SUPPLY_FOR_GEMS,
       passport.address,
     )
   );
 
-  const catalog = <SnakeCatalog>(
-    await snakeCatalogFactory.deploy(C.CATALOG_METADATA_URI, C.CATALOG_TYPE)
-  );
+  // const catalog = <SnakeCatalog>(
+  //   await snakeCatalogFactory.deploy(C.CATALOG_METADATA_URI, C.CATALOG_TYPE)
+  // );
 
   await snakeSoldiers.deployed();
   if (!fromTesting) {
@@ -85,10 +93,10 @@ async function deployContracts(
   if (!fromTesting) {
     console.log(`Faction Gem deployed to ${factionGem.address}`);
   }
-  await catalog.deployed();
-  if (!fromTesting) {
-    console.log(`Snake Catalog deployed to ${catalog.address}`);
-  }
+  // await catalog.deployed();
+  // if (!fromTesting) {
+  //   console.log(`Snake Catalog deployed to ${catalog.address}`);
+  // }
 
   await snakeSoldiers.setAutoAcceptCollection(elementGem.address);
   await snakeSoldiers.setAutoAcceptCollection(skillGem.address);
@@ -102,7 +110,11 @@ async function deployContracts(
   if (!fromTesting) {
     await run('verify:verify', {
       address: snakeSoldiers.address,
-      constructorArguments: [C.SNAKE_METADATA_URI, C.MAX_GIFTS_PER_PHASE],
+      constructorArguments: [
+        C.SNAKE_SOLDIER_COLLECTION_METADATA,
+        C.MAX_GIFTS_PER_PHASE,
+        rcrtAddres,
+      ],
     });
     await run('verify:verify', {
       address: passport.address,
@@ -110,12 +122,16 @@ async function deployContracts(
     });
     await run('verify:verify', {
       address: elementGem.address,
-      constructorArguments: [C.ELEMENT_GEM_METADATA, snakeSoldiers.address, C.MAX_SUPPLY_FOR_GEMS],
+      constructorArguments: [
+        C.ELEMENT_GEM_COLLECTION_METADATA,
+        snakeSoldiers.address,
+        C.MAX_SUPPLY_FOR_GEMS,
+      ],
     });
     await run('verify:verify', {
       address: factionGem.address,
       constructorArguments: [
-        C.FACTION_GEM_METADATA,
+        C.FACTION_GEM_COLLECTION_METADATA,
         snakeSoldiers.address,
         C.MAX_SUPPLY_FOR_GEMS,
         passport.address,
@@ -123,12 +139,16 @@ async function deployContracts(
     });
     await run('verify:verify', {
       address: skillGem.address,
-      constructorArguments: [C.SKILL_GEM_METADATA, snakeSoldiers.address, C.MAX_SUPPLY_FOR_GEMS],
+      constructorArguments: [
+        C.SKILL_GEM_COLLECTION_METADATA,
+        snakeSoldiers.address,
+        C.MAX_SUPPLY_FOR_GEMS,
+      ],
     });
-    await run('verify:verify', {
-      address: catalog.address,
-      constructorArguments: [C.CATALOG_METADATA_URI, C.CATALOG_TYPE],
-    });
+    // await run('verify:verify', {
+    //   address: catalog.address,
+    //   constructorArguments: [C.CATALOG_METADATA_URI, C.CATALOG_TYPE],
+    // });
   }
 
   return {
@@ -137,7 +157,7 @@ async function deployContracts(
     elementGem,
     factionGem,
     skillGem,
-    catalog,
+    // catalog,
   };
 }
 

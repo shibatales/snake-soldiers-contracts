@@ -25,6 +25,7 @@ const config: HardhatUserConfig = {
     },
     moonbaseAlpha: {
       url: 'https://rpc.testnet.moonbeam.network',
+      chainId: 1287, // (hex: 0x507)
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 1000000000,
     },

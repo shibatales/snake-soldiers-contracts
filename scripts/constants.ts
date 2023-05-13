@@ -11,23 +11,26 @@ function bn(num: number): BigNumber {
   return BigNumber.from(num);
 }
 
-const BASE_URI = 'ipfs://Qmd4oLxGZdRwrdkK5TLqSQg75RauGbn3XNdErUJCdpgUXw'; // TODO, replace with actual IPFS base
-const ELEMENT_GEM_METADATA = `${BASE_URI}/gems/elements/collectionMeta`;
-const SKILL_GEM_METADATA = `${BASE_URI}/gems/skills/collectionMeta`;
-const FACTION_GEM_METADATA = `${BASE_URI}/gems/factions/collectionMeta`;
-const SNAKE_METADATA_URI = `${BASE_URI}/soldiers/collectionMeta`;
+const BASE_URI_EGGS = 'ipfs://ipfs/QmPXbBw942DvQzJYcSovjK2mcveF8GiWk8CkvLphzuz2YM';
+const BASE_URI_GEMS = 'ipfs://GEMS'; // TODO, replace with actual IPFS base
+const BASE_URI_COLLECTION_META = 'ipfs://ipfs/QmVR3pk4BYEwfZFUKwFeX7VPNbmSRNXRcNJLJ8eGfQDi5E';
+const ELEMENT_GEM_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/ElementGemCollectionMeta`;
+const SKILL_GEM_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/SkillGemCollectionMeta`;
+const FACTION_GEM_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/FactionGemCollectionMeta`;
+const SNAKE_SOLDIER_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/SnakeSoldiersCollectionMeta`;
+
 const CATALOG_METADATA_URI = ``;
 const CATALOG_TYPE = 'img/png';
-const MAX_GIFTS_PER_PHASE = bn(20);
+const MAX_GIFTS_PER_PHASE = bn(10);
 const MAX_SUPPLY_FOR_GEMS = bn(5000);
 
 const SOLDIER_RANK = 0;
 const COMMANDER_RANK = 1;
 const GENERAL_RANK = 2;
 
-let SOLDIER_PRICE = ethers.utils.parseEther('20.0');
-let COMMANDER_PRICE = ethers.utils.parseEther('200.0');
-let GENERAL_PRICE = ethers.utils.parseEther('1600.0');
+let SOLDIER_PRICE = ethers.utils.parseEther('25.0');
+let COMMANDER_PRICE = ethers.utils.parseEther('250.0');
+let GENERAL_PRICE = ethers.utils.parseEther('2000.0');
 
 if (!IS_PROD) {
   SOLDIER_PRICE = SOLDIER_PRICE.div(2000);
@@ -53,11 +56,12 @@ const ASSET_ID_GENERAL_EGG_AIR = bn(15);
 
 export {
   bn,
-  BASE_URI,
-  ELEMENT_GEM_METADATA,
-  SKILL_GEM_METADATA,
-  FACTION_GEM_METADATA,
-  SNAKE_METADATA_URI,
+  BASE_URI_EGGS,
+  BASE_URI_GEMS,
+  ELEMENT_GEM_COLLECTION_METADATA,
+  SKILL_GEM_COLLECTION_METADATA,
+  FACTION_GEM_COLLECTION_METADATA,
+  SNAKE_SOLDIER_COLLECTION_METADATA,
   MAX_GIFTS_PER_PHASE,
   MAX_SUPPLY_FOR_GEMS,
   CATALOG_METADATA_URI,
