@@ -107,16 +107,13 @@ contract SnakeVsSnake is OwnableLock {
             revert NotEnoughMorale();
         }
 
-        (uint80 lastRoundId, , , , ) = AggregatorV3Interface(_aggregator)
-            .latestRoundData();
-
         _lastChallengeId++;
         // store battle
         _challenges[_lastChallengeId] = Challenge({
             challenger: challenger,
             challenged: challenged,
             initTime: block.timestamp,
-            oracleIdRound: lastRoundId + 1,
+            oracleIdRound: 0,
             endTime: 0,
             winner: 0,
             experienceClaimed: false
@@ -186,8 +183,12 @@ contract SnakeVsSnake is OwnableLock {
         ) {
             revert InvalidChallenge();
         }
+    
+        (uint80 lastRoundId, , , , ) = AggregatorV3Interface(_aggregator)
+            .latestRoundData();
 
         activeChallenge.initTime = block.timestamp;
+        activeChallenge.oracleIdRound = lastRoundId + 1;
         _snakeToSnakeToCurrentChallengeId[challenger][
             challenged
         ] = activeChallengeId;
@@ -215,7 +216,7 @@ contract SnakeVsSnake is OwnableLock {
         Challenge memory activeChallenge = _challenges[activeChallengeId];
         uint256[] memory challengerStats;
         uint256[] memory challengedStats;
-        (challengerStats, challengedStats) = _getStats(challenger, challenged);
+        (challengerStats, challengedStats) = getStats(challenger, challenged);
 
         (
             challengerStats[STAT_INDEX_ATK],
@@ -432,6 +433,7 @@ contract SnakeVsSnake is OwnableLock {
     }
 
     function getSeedFromRound(uint80 roundId) public view returns (uint256) {
+        // TODO: If the data is not yet available, this would fail. We could use a custom error.
         (, int256 answer, , , ) = AggregatorV3Interface(_aggregator)
             .getRoundData(roundId);
         uint8 decimals = AggregatorV3Interface(_aggregator).decimals();
@@ -524,10 +526,10 @@ contract SnakeVsSnake is OwnableLock {
         }
     }
 
-    function _getStats(
+    function getStats(
         uint256 challenger,
         uint256 challenged
-    ) private view returns (uint256[] memory, uint256[] memory) {
+    ) public view returns (uint256[] memory, uint256[] memory) {
         string[] memory keys = new string[](6);
         keys[STAT_INDEX_HP] = "HP";
         keys[STAT_INDEX_MORALE] = "MOR";
