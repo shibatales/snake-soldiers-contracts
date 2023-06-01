@@ -32,11 +32,11 @@ async function addMainAssets(
     ],
     [],
   );
-  // console.log('Adding assets to gems.');
+  console.log('Adding assets to gems.');
 
-  // await elementGem.addAssetEntry(`${BASE_URI_GEMS}/elements/`);
-  // await factionGem.addAssetEntry(`${BASE_URI_GEMS}/factions/`);
-  // await skillGem.addAssetEntry(`${BASE_URI_GEMS}/skills/`);
+  await elementGem.addAssetEntry(`${BASE_URI_GEMS}/elements/`);
+  await factionGem.addAssetEntry(`${BASE_URI_GEMS}/factions/`);
+  await skillGem.addAssetEntry(`${BASE_URI_GEMS}/skills/`);
 
   console.log('Base assets added.');
 }

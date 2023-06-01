@@ -20,7 +20,7 @@ async function deployContracts(
   factionGem: FactionGem;
   skillGem: SkillGem;
   passport: SerpenTerraPassport;
-  // catalog: SnakeCatalog;
+  catalog: SnakeCatalog;
 }> {
   if (!fromTesting) {
     console.log('Deploying smart contracts');
@@ -30,7 +30,7 @@ async function deployContracts(
   const factionGemFactory = await ethers.getContractFactory('FactionGem');
   const skillGemFactory = await ethers.getContractFactory('SkillGem');
   const serpenTerraPassportFactory = await ethers.getContractFactory('SerpenTerraPassport');
-  // const snakeCatalogFactory = await ethers.getContractFactory('SnakeCatalog');
+  const snakeCatalogFactory = await ethers.getContractFactory('SnakeCatalog');
 
   const snakeSoldiers = <SnakeSoldier>(
     await snakeSoldierFactory.deploy(
@@ -69,9 +69,9 @@ async function deployContracts(
     )
   );
 
-  // const catalog = <SnakeCatalog>(
-  //   await snakeCatalogFactory.deploy(C.CATALOG_METADATA_URI, C.CATALOG_TYPE)
-  // );
+  const catalog = <SnakeCatalog>(
+    await snakeCatalogFactory.deploy(C.CATALOG_METADATA_URI, C.CATALOG_TYPE)
+  );
 
   await snakeSoldiers.deployed();
   if (!fromTesting) {
@@ -93,10 +93,10 @@ async function deployContracts(
   if (!fromTesting) {
     console.log(`Faction Gem deployed to ${factionGem.address}`);
   }
-  // await catalog.deployed();
-  // if (!fromTesting) {
-  //   console.log(`Snake Catalog deployed to ${catalog.address}`);
-  // }
+  await catalog.deployed();
+  if (!fromTesting) {
+    console.log(`Snake Catalog deployed to ${catalog.address}`);
+  }
 
   await snakeSoldiers.setAutoAcceptCollection(elementGem.address);
   await snakeSoldiers.setAutoAcceptCollection(skillGem.address);
@@ -105,7 +105,7 @@ async function deployContracts(
   await passport.setFactionGem(factionGem.address);
 
   await addMainAssets(snakeSoldiers, elementGem, factionGem, skillGem);
-  // await configureCatalog(catalog, elementGem.address, skillGem.address, factionGem.address);
+  await configureCatalog(catalog, elementGem.address, skillGem.address, factionGem.address);
 
   if (!fromTesting) {
     await run('verify:verify', {
@@ -145,10 +145,10 @@ async function deployContracts(
         C.MAX_SUPPLY_FOR_GEMS,
       ],
     });
-    // await run('verify:verify', {
-    //   address: catalog.address,
-    //   constructorArguments: [C.CATALOG_METADATA_URI, C.CATALOG_TYPE],
-    // });
+    await run('verify:verify', {
+      address: catalog.address,
+      constructorArguments: [C.CATALOG_METADATA_URI, C.CATALOG_TYPE],
+    });
   }
 
   return {
@@ -157,7 +157,7 @@ async function deployContracts(
     elementGem,
     factionGem,
     skillGem,
-    // catalog,
+    catalog,
   };
 }
 
