@@ -14,7 +14,8 @@ import {
   ASSET_ID_SOLDIER_EGG_FIRE,
   ASSET_ID_SOLDIER_EGG_WATER,
   ASSET_ID_SOLDIER_EGG,
-  BASE_URI,
+  BASE_URI_EGGS,
+  BASE_URI_GEMS,
   bn,
   COMMANDER_PRICE,
   COMMANDER_RANK,
@@ -563,9 +564,9 @@ describe('SnakeSoldiers', async () => {
 
         describe('Gems', function () {
           it('has support for soulbound interface on faction and element gems', async function () {
-            expect(await elementGem.supportsInterface('0xa7331ab1')).to.eql(true);
-            expect(await factionGem.supportsInterface('0xa7331ab1')).to.eql(true);
-            expect(await skillGem.supportsInterface('0xa7331ab1')).to.eql(false);
+            expect(await elementGem.supportsInterface('0x91a6262f')).to.eql(true);
+            expect(await factionGem.supportsInterface('0x91a6262f')).to.eql(true);
+            expect(await skillGem.supportsInterface('0x91a6262f')).to.eql(false);
           });
 
           it('has support for all legos on gems', async function () {

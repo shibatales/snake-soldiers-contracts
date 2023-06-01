@@ -85,16 +85,18 @@ contract FactionGem is RMRKSoulbound, BaseGem {
         else return _POST_URL_PER_TYPE_FOREST;
     }
 
-    function isNonTransferable(
-        uint256 tokenId
+    function isTransferable(
+        uint256 tokenId,
+        address from,
+        address to
     ) public view override returns (bool) {
-        uint256 mod = tokenId % 5;
-        if (mod == 4) return false; // Forest gem is not soulbound
+        bool isForestGem = tokenId % 5 == 4;
+        if (from == address(0) || to == address(0) || isForestGem) return true; // Minting or burning
 
         address owner = ownerOf(tokenId);
         uint256 balance = ISerpenTerraPassport(_passportAddress).balanceOf(
             owner
         );
-        return balance == 0;
+        return balance > 0;
     }
 }

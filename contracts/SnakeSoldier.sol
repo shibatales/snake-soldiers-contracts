@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import "@rmrk-team/evm-contracts/contracts/RMRK/access/Ownable.sol";
-import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKEquippable.sol";
+import "@rmrk-team/evm-contracts/contracts/RMRK/equippable/RMRKMinifiedEquippable.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/extension/RMRKRoyalties.sol";
 import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -23,7 +23,7 @@ contract SnakeSoldier is
     Ownable,
     RMRKCollectionMetadata,
     RMRKRoyalties,
-    RMRKEquippable
+    RMRKMinifiedEquippable
 {
     using Strings for uint256;
 
@@ -94,7 +94,7 @@ contract SnakeSoldier is
     )
         RMRKCollectionMetadata(collectionMetadata_)
         RMRKRoyalties(_msgSender(), 500) // 500 -> 5%
-        RMRKEquippable("Snake Soldiers", "SS")
+        RMRKMinifiedEquippable("Snake Soldiers", "SS")
     {
         _maxGiftsPerPhase = maxGiftsPerPhase_;
         _rcrtToken = rcrtToken;
@@ -185,7 +185,7 @@ contract SnakeSoldier is
     )
         public
         view
-        override(AbstractMultiAsset, IERC5773)
+        override
         returns (string memory)
     {
         string memory metaUri = super.getAssetMetadata(tokenId, assetId);
@@ -346,8 +346,7 @@ contract SnakeSoldier is
         uint64 oldAssetId;
         for (uint256 i; i < length; ) {
             uint256 tokenId = tokenIds[i];
-            if (!_isApprovedForAssetsOrOwner(_msgSender(), tokenId))
-                revert RMRKNotApprovedForAssetsOrOwner();
+            _onlyApprovedForAssetsOrOwner(tokenId);
             if (_elementRevealed[tokenId] == 1) revert ElementAlreadyRevealed();
             _elementRevealed[tokenId] = 1;
 
