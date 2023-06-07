@@ -8,16 +8,17 @@ import "@rmrk-team/evm-contracts/contracts/RMRK/utils/RMRKCollectionMetadata.sol
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./IERC20Min.sol";
 
+error BadMigration();
+error CannotUnequipElementGem();
 error ElementAlreadyRevealed();
 error MaxGiftsPerPhaseReached();
+error MaxPhaseReached();
 error MintOverMax();
 error MintUnderpriced();
 error MintZero();
+error NextPhasePriceMustBeEqualOrHigher();
 error SaleNotOpen();
 error SalePaused();
-error MustBeRecruited();
-error MaxPhaseReached();
-error NextPhasePriceMustBeEqualOrHigher();
 
 contract SnakeSoldier is
     Ownable,
@@ -47,21 +48,18 @@ contract SnakeSoldier is
 
     uint64 private constant _LOWEST_POSSIBLE_PRIORITY = (2 ^ 64) - 1;
 
-    uint64 private constant _ASSET_ID_SOLDIER_EGG = 1;
-    uint64 private constant _ASSET_ID_COMMANDER_EGG = 2;
-    uint64 private constant _ASSET_ID_GENERAL_EGG = 3;
-    uint64 private constant _ASSET_ID_SOLDIER_EGG_FIRE = 4;
-    uint64 private constant _ASSET_ID_SOLDIER_EGG_EARTH = 5;
-    uint64 private constant _ASSET_ID_SOLDIER_EGG_WATER = 6;
-    uint64 private constant _ASSET_ID_SOLDIER_EGG_AIR = 7;
-    uint64 private constant _ASSET_ID_COMMANDER_EGG_FIRE = 8;
-    uint64 private constant _ASSET_ID_COMMANDER_EGG_EARTH = 9;
-    uint64 private constant _ASSET_ID_COMMANDER_EGG_WATER = 10;
-    uint64 private constant _ASSET_ID_COMMANDER_EGG_AIR = 11;
-    uint64 private constant _ASSET_ID_GENERAL_EGG_FIRE = 12;
-    uint64 private constant _ASSET_ID_GENERAL_EGG_EARTH = 13;
-    uint64 private constant _ASSET_ID_GENERAL_EGG_WATER = 14;
-    uint64 private constant _ASSET_ID_GENERAL_EGG_AIR = 15;
+    uint64 private constant _ASSET_ID_SOLDIER_EGG_FIRE = 1;
+    // uint64 private constant _ASSET_ID_SOLDIER_EGG_EARTH = 2;
+    // uint64 private constant _ASSET_ID_SOLDIER_EGG_WATER = 3;
+    // uint64 private constant _ASSET_ID_SOLDIER_EGG_AIR = 4;
+    uint64 private constant _ASSET_ID_COMMANDER_EGG_FIRE = 5;
+    // uint64 private constant _ASSET_ID_COMMANDER_EGG_EARTH = 6;
+    // uint64 private constant _ASSET_ID_COMMANDER_EGG_WATER = 7;
+    // uint64 private constant _ASSET_ID_COMMANDER_EGG_AIR = 8;
+    uint64 private constant _ASSET_ID_GENERAL_EGG_FIRE = 9;
+    // uint64 private constant _ASSET_ID_GENERAL_EGG_EARTH = 10;
+    // uint64 private constant _ASSET_ID_GENERAL_EGG_WATER = 11;
+    // uint64 private constant _ASSET_ID_GENERAL_EGG_AIR = 12;
 
     uint256 private constant _GENERALS_OFFSET = 0; // No offset.
     uint256 private constant _COMMANDERS_OFFSET =
@@ -75,7 +73,8 @@ contract SnakeSoldier is
     uint256 private _pricePerGeneral;
 
     mapping(uint256 => uint256) private _elementRevealed;
-    mapping(Rank => uint256) private _totalSupply;
+    mapping(Rank => uint256) private _totalMinted;
+    mapping(Rank => uint256) private _totalBurned;
     uint256 private _phase;
     uint256 private _phasesLocked;
     uint256 private _paused;
@@ -84,20 +83,20 @@ contract SnakeSoldier is
     mapping(address => bool) private _autoAcceptCollection;
     uint256 private _totalGifts;
     uint256 private immutable _maxGiftsPerPhase;
-    address immutable _rcrtToken;
-    uint256 private _onlyRecruited = 1;
+
+    uint256 private constant _MAX_MIGRATIONS = 500;
+    uint256 private _total_migrations;
+    uint64 private _slotForElementGem;
 
     constructor(
         string memory collectionMetadata_,
-        uint256 maxGiftsPerPhase_,
-        address rcrtToken
+        uint256 maxGiftsPerPhase_
     )
         RMRKCollectionMetadata(collectionMetadata_)
         RMRKRoyalties(_msgSender(), 500) // 500 -> 5%
         RMRKMinifiedEquippable("Snake Soldiers", "SS")
     {
         _maxGiftsPerPhase = maxGiftsPerPhase_;
-        _rcrtToken = rcrtToken;
     }
 
     function updateRoyaltyRecipient(
@@ -207,14 +206,14 @@ contract SnakeSoldier is
     }
 
     function totalSupply(Rank rank) public view returns (uint256) {
-        return _totalSupply[rank];
+        return _totalMinted[rank] - _totalBurned[rank];
     }
 
     function totalSupply() public view returns (uint256) {
         return
-            _totalSupply[Rank.Soldier] +
-            _totalSupply[Rank.Commander] +
-            _totalSupply[Rank.General];
+            totalSupply(Rank.Soldier) +
+            totalSupply(Rank.Commander) +
+            totalSupply(Rank.General);
     }
 
     function maxSupply(Rank rank) public view returns (uint256) {
@@ -234,10 +233,6 @@ contract SnakeSoldier is
 
     function setPaused(bool paused) external onlyOwner {
         _paused = paused ? 1 : 0;
-    }
-
-    function openForAll() external onlyOwner {
-        _onlyRecruited = 0;
     }
 
     function enableNextPhase(
@@ -299,32 +294,42 @@ contract SnakeSoldier is
     function _mintChecks(uint256 numToMint, Rank rank) private view {
         if (_phase == 0) revert SaleNotOpen();
         if (_paused == 1) revert SalePaused();
-        if (
-            _onlyRecruited == 1 &&
-            IERC20Min(_rcrtToken).balanceOf(_msgSender()) == 0
-        ) revert MustBeRecruited();
         if (numToMint == uint256(0)) revert MintZero();
-        if (numToMint + totalSupply(rank) > maxSupply(rank))
+        if (numToMint + _totalMinted[rank] > maxSupply(rank))
             revert MintOverMax();
     }
 
+    function migrate(address[] memory owners, Rank rank) public onlyOwner {
+        uint256 len = owners.length;
+        if(_total_migrations + len > _MAX_MIGRATIONS) revert BadMigration();
+        _total_migrations += len;
+        for (uint256 i; i < len; ) {
+            _innerMint(owners[i], 1, rank);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     function _innerMint(address to, uint256 numToMint, Rank rank) private {
-        uint256 nextToken = _totalSupply[rank] + 1 + _rankOffset(rank);
+        uint256 nextToken = _totalMinted[rank] + 1 + _rankOffset(rank);
         unchecked {
-            _totalSupply[rank] += numToMint;
+            _totalMinted[rank] += numToMint;
         }
         uint256 totalSupplyOffset = nextToken + numToMint;
         uint64 assetId;
 
         for (uint256 i = nextToken; i < totalSupplyOffset; ) {
             _safeMint(to, i, "");
+            // The "+ tokenId % 4" part, sets the asset for the right element
             if (i > _SOLDIERS_OFFSET) {
-                assetId = _ASSET_ID_SOLDIER_EGG;
+                assetId = _ASSET_ID_SOLDIER_EGG_FIRE;
             } else if (i > _COMMANDERS_OFFSET) {
-                assetId = _ASSET_ID_COMMANDER_EGG;
+                assetId = _ASSET_ID_COMMANDER_EGG_FIRE;
             } else {
-                assetId = _ASSET_ID_GENERAL_EGG;
+                assetId = _ASSET_ID_GENERAL_EGG_FIRE;
             }
+            assetId += uint64(i % 4);
             _addAssetToToken(i, assetId, 0);
             _acceptAsset(i, 0, assetId);
             unchecked {
@@ -340,35 +345,20 @@ contract SnakeSoldier is
         require(success, "Transfer failed.");
     }
 
-    function revealElements(uint256[] calldata tokenIds) external {
-        uint256 length = tokenIds.length;
-        uint64 newAssetId;
-        uint64 oldAssetId;
-        for (uint256 i; i < length; ) {
-            uint256 tokenId = tokenIds[i];
-            _onlyApprovedForAssetsOrOwner(tokenId);
-            if (_elementRevealed[tokenId] == 1) revert ElementAlreadyRevealed();
-            _elementRevealed[tokenId] = 1;
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
+        super._beforeTokenTransfer(from, to, tokenId);
+        if (to == address(0)) {
+            Rank rank;
+            if (tokenId > _SOLDIERS_OFFSET)
+                rank = Rank.Soldier;
+            else if (tokenId > _COMMANDERS_OFFSET)
+                rank = Rank.Commander;
+            else rank = Rank.General;
 
-            // The "+ tokenId % 4" part, sets the asset for the right element
-            if (tokenId > _SOLDIERS_OFFSET) {
-                oldAssetId = _ASSET_ID_SOLDIER_EGG;
-                newAssetId = _ASSET_ID_SOLDIER_EGG_FIRE;
-            } else if (tokenId > _COMMANDERS_OFFSET) {
-                oldAssetId = _ASSET_ID_COMMANDER_EGG;
-                newAssetId = _ASSET_ID_COMMANDER_EGG_FIRE;
-            } else {
-                oldAssetId = _ASSET_ID_GENERAL_EGG;
-                newAssetId = _ASSET_ID_GENERAL_EGG_FIRE;
-            }
-            newAssetId += uint64(tokenId % 4);
-            _addAssetToToken(tokenId, newAssetId, oldAssetId);
-            _acceptAsset(tokenId, 0, newAssetId);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++_totalBurned[rank]; }
         }
     }
+
 
     function setAutoAcceptCollection(
         address collection
@@ -376,6 +366,10 @@ contract SnakeSoldier is
         _autoAcceptCollection[collection] = true;
     }
 
+
+    function setSlotForElementGem(uint64 slotPartId) public onlyOwner {
+        _slotForElementGem = slotPartId;
+    }
     function _afterAddChild(
         uint256 tokenId,
         address childAddress,
@@ -391,5 +385,14 @@ contract SnakeSoldier is
                 childId
             );
         }
+    }
+
+    function _beforeUnequip(
+        uint256,
+        uint64,
+        uint64 slotPartId
+    ) internal virtual override {
+        if (slotPartId == _slotForElementGem)
+            revert CannotUnequipElementGem();
     }
 }
