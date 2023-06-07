@@ -11,13 +11,12 @@ function bn(num: number): BigNumber {
   return BigNumber.from(num);
 }
 
-const BASE_URI_EGGS = 'ipfs://ipfs/QmPXbBw942DvQzJYcSovjK2mcveF8GiWk8CkvLphzuz2YM';
+const BASE_URI_EGGS = 'ipfs://QmPxzTUkLo4VZkkpLF7jHxERcWqjFSSRdkUAAdgB2VQ3jT';
 const BASE_URI_GEMS = 'ipfs://GEMS'; // TODO, replace with actual IPFS base
-const BASE_URI_COLLECTION_META = 'ipfs://ipfs/QmVR3pk4BYEwfZFUKwFeX7VPNbmSRNXRcNJLJ8eGfQDi5E';
-const ELEMENT_GEM_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/ElementGemCollectionMeta`;
-const SKILL_GEM_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/SkillGemCollectionMeta`;
-const FACTION_GEM_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/FactionGemCollectionMeta`;
-const SNAKE_SOLDIER_COLLECTION_METADATA = `${BASE_URI_COLLECTION_META}/SnakeSoldiersCollectionMeta`;
+const ELEMENT_GEM_COLLECTION_METADATA = `$ipfs://ElementGemCollectionMeta`; // TODO, replace with actual IPFS
+const SKILL_GEM_COLLECTION_METADATA = `$ipfs://SkillGemCollectionMeta`; // TODO, replace with actual IPFS
+const FACTION_GEM_COLLECTION_METADATA = `$ipfs://FactionGemCollectionMeta`; // TODO, replace with actual IPFS
+const SNAKE_SOLDIER_COLLECTION_METADATA = `ipfs://QmZJhS8dnhnRbybkf5swaobp1Y64oFdM52uHxcWxuXg1YT`;
 
 const CATALOG_METADATA_URI = ``;
 const CATALOG_TYPE = 'img/png';
@@ -38,21 +37,18 @@ if (!IS_PROD) {
   GENERAL_PRICE = GENERAL_PRICE.div(2000);
 }
 
-const ASSET_ID_SOLDIER_EGG = bn(1);
-const ASSET_ID_COMMANDER_EGG = bn(2);
-const ASSET_ID_GENERAL_EGG = bn(3);
-const ASSET_ID_SOLDIER_EGG_FIRE = bn(4);
-const ASSET_ID_SOLDIER_EGG_EARTH = bn(5);
-const ASSET_ID_SOLDIER_EGG_WATER = bn(6);
-const ASSET_ID_SOLDIER_EGG_AIR = bn(7);
-const ASSET_ID_COMMANDER_EGG_FIRE = bn(8);
-const ASSET_ID_COMMANDER_EGG_EARTH = bn(9);
-const ASSET_ID_COMMANDER_EGG_WATER = bn(10);
-const ASSET_ID_COMMANDER_EGG_AIR = bn(11);
-const ASSET_ID_GENERAL_EGG_FIRE = bn(12);
-const ASSET_ID_GENERAL_EGG_EARTH = bn(13);
-const ASSET_ID_GENERAL_EGG_WATER = bn(14);
-const ASSET_ID_GENERAL_EGG_AIR = bn(15);
+const ASSET_ID_SOLDIER_EGG_FIRE = bn(1);
+const ASSET_ID_SOLDIER_EGG_EARTH = bn(2);
+const ASSET_ID_SOLDIER_EGG_WATER = bn(3);
+const ASSET_ID_SOLDIER_EGG_AIR = bn(4);
+const ASSET_ID_COMMANDER_EGG_FIRE = bn(5);
+const ASSET_ID_COMMANDER_EGG_EARTH = bn(6);
+const ASSET_ID_COMMANDER_EGG_WATER = bn(7);
+const ASSET_ID_COMMANDER_EGG_AIR = bn(8);
+const ASSET_ID_GENERAL_EGG_FIRE = bn(9);
+const ASSET_ID_GENERAL_EGG_EARTH = bn(10);
+const ASSET_ID_GENERAL_EGG_WATER = bn(11);
+const ASSET_ID_GENERAL_EGG_AIR = bn(12);
 
 export {
   bn,
@@ -66,9 +62,6 @@ export {
   MAX_SUPPLY_FOR_GEMS,
   CATALOG_METADATA_URI,
   CATALOG_TYPE,
-  ASSET_ID_SOLDIER_EGG,
-  ASSET_ID_COMMANDER_EGG,
-  ASSET_ID_GENERAL_EGG,
   ASSET_ID_SOLDIER_EGG_FIRE,
   ASSET_ID_SOLDIER_EGG_EARTH,
   ASSET_ID_SOLDIER_EGG_WATER,

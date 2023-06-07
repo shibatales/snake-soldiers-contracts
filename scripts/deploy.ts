@@ -12,7 +12,6 @@ import addMainAssets from './addMainAssets';
 import configureCatalog from './configureCatalog';
 
 async function deployContracts(
-  rcrtAddres: string,
   fromTesting: boolean,
 ): Promise<{
   snakeSoldiers: SnakeSoldier;
@@ -36,7 +35,6 @@ async function deployContracts(
     await snakeSoldierFactory.deploy(
       C.SNAKE_SOLDIER_COLLECTION_METADATA,
       C.MAX_GIFTS_PER_PHASE,
-      rcrtAddres,
     )
   );
 
@@ -113,7 +111,6 @@ async function deployContracts(
       constructorArguments: [
         C.SNAKE_SOLDIER_COLLECTION_METADATA,
         C.MAX_GIFTS_PER_PHASE,
-        rcrtAddres,
       ],
     });
     await run('verify:verify', {
