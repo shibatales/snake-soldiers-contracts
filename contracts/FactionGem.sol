@@ -24,8 +24,8 @@ contract FactionGem is RMRKSoulbound, BaseGem {
         address passportAddress
     )
         BaseGem(
-            "Snake Soldiers Element Gem",
-            "SSEG",
+            "Snake Soldiers Faction Gem",
+            "SSFG",
             collectionMetadata_,
             snakeSoldiers_,
             maxSupply_
@@ -91,6 +91,8 @@ contract FactionGem is RMRKSoulbound, BaseGem {
         address to
     ) public view override returns (bool) {
         bool isForestGem = tokenId % 5 == 4;
+        if (from == address(0) && to == address(0) && !isForestGem)
+            return false; // General transferability
         if (from == address(0) || to == address(0) || isForestGem) return true; // Minting or burning
 
         address owner = ownerOf(tokenId);

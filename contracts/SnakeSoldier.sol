@@ -181,12 +181,7 @@ contract SnakeSoldier is
     function getAssetMetadata(
         uint256 tokenId,
         uint64 assetId
-    )
-        public
-        view
-        override
-        returns (string memory)
-    {
+    ) public view override returns (string memory) {
         string memory metaUri = super.getAssetMetadata(tokenId, assetId);
         if (_isTokenAssetEnumerated[assetId] != 0)
             metaUri = string(abi.encodePacked(metaUri, tokenId.toString()));
@@ -301,7 +296,7 @@ contract SnakeSoldier is
 
     function migrate(address[] memory owners, Rank rank) public onlyOwner {
         uint256 len = owners.length;
-        if(_total_migrations + len > _MAX_MIGRATIONS) revert BadMigration();
+        if (_total_migrations + len > _MAX_MIGRATIONS) revert BadMigration();
         _total_migrations += len;
         for (uint256 i; i < len; ) {
             _innerMint(owners[i], 1, rank);
@@ -345,20 +340,23 @@ contract SnakeSoldier is
         require(success, "Transfer failed.");
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override {
         super._beforeTokenTransfer(from, to, tokenId);
         if (to == address(0)) {
             Rank rank;
-            if (tokenId > _SOLDIERS_OFFSET)
-                rank = Rank.Soldier;
-            else if (tokenId > _COMMANDERS_OFFSET)
-                rank = Rank.Commander;
+            if (tokenId > _SOLDIERS_OFFSET) rank = Rank.Soldier;
+            else if (tokenId > _COMMANDERS_OFFSET) rank = Rank.Commander;
             else rank = Rank.General;
 
-            unchecked { ++_totalBurned[rank]; }
+            unchecked {
+                ++_totalBurned[rank];
+            }
         }
     }
-
 
     function setAutoAcceptCollection(
         address collection
@@ -366,10 +364,10 @@ contract SnakeSoldier is
         _autoAcceptCollection[collection] = true;
     }
 
-
     function setSlotForElementGem(uint64 slotPartId) public onlyOwner {
         _slotForElementGem = slotPartId;
     }
+
     function _afterAddChild(
         uint256 tokenId,
         address childAddress,
@@ -392,7 +390,6 @@ contract SnakeSoldier is
         uint64,
         uint64 slotPartId
     ) internal virtual override {
-        if (slotPartId == _slotForElementGem)
-            revert CannotUnequipElementGem();
+        if (slotPartId == _slotForElementGem) revert CannotUnequipElementGem();
     }
 }

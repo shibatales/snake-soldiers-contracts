@@ -196,7 +196,7 @@ abstract contract BaseGem is
     {
         string memory baseMetaUri = super.getAssetMetadata(tokenId, assetId);
         string memory postUri = _postUriFor(tokenId);
-        return string.concat(baseMetaUri, postUri);
+        return string.concat(baseMetaUri, postUri, ".json");
     }
 
     function _postUriFor(

@@ -5,7 +5,7 @@ pragma solidity ^0.8.18;
 import "./BaseGem.sol";
 
 contract SkillGem is BaseGem {
-    string private constant _POST_URL_PER_TYPE_COMBAT = "combat";
+    string private constant _POST_URL_PER_TYPE_COMBAT = "melee";
     string private constant _POST_URL_PER_TYPE_TANK = "tank";
     string private constant _POST_URL_PER_TYPE_HEAL = "healer";
     string private constant _POST_URL_PER_TYPE_SNIPER = "sniper";

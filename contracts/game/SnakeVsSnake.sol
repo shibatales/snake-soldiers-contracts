@@ -183,7 +183,7 @@ contract SnakeVsSnake is OwnableLock {
         ) {
             revert InvalidChallenge();
         }
-    
+
         (uint80 lastRoundId, , , , ) = AggregatorV3Interface(_aggregator)
             .latestRoundData();
 
