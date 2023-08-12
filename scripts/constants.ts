@@ -12,14 +12,12 @@ function bn(num: number): BigNumber {
 }
 
 const BASE_URI_EGGS = 'ipfs://QmPxzTUkLo4VZkkpLF7jHxERcWqjFSSRdkUAAdgB2VQ3jT';
-const BASE_URI_GEMS = 'ipfs://GEMS'; // TODO, replace with actual IPFS base
-const ELEMENT_GEM_COLLECTION_METADATA = `$ipfs://ElementGemCollectionMeta`; // TODO, replace with actual IPFS
-const SKILL_GEM_COLLECTION_METADATA = `$ipfs://SkillGemCollectionMeta`; // TODO, replace with actual IPFS
-const FACTION_GEM_COLLECTION_METADATA = `$ipfs://FactionGemCollectionMeta`; // TODO, replace with actual IPFS
+const BASE_URI_GEMS = 'ipfs://QmNc5NA1qS2QcXF7u3F1sGm9EgB2gucSHSUKDgWJL3jkJW';
+const ELEMENT_GEM_COLLECTION_METADATA = `$ipfs://${BASE_URI_GEMS}/elements/collection.json`;
+const SKILL_GEM_COLLECTION_METADATA = `$ipfs://${BASE_URI_GEMS}/skills/collection.json`;
+const FACTION_GEM_COLLECTION_METADATA = `$ipfs://${BASE_URI_GEMS}/factions/collection.json`;
 const SNAKE_SOLDIER_COLLECTION_METADATA = `ipfs://QmZJhS8dnhnRbybkf5swaobp1Y64oFdM52uHxcWxuXg1YT`;
 
-const CATALOG_METADATA_URI = ``;
-const CATALOG_TYPE = 'img/png';
 const MAX_GIFTS_PER_PHASE = bn(10);
 const MAX_SUPPLY_FOR_GEMS = bn(5000);
 
@@ -60,8 +58,6 @@ export {
   SNAKE_SOLDIER_COLLECTION_METADATA,
   MAX_GIFTS_PER_PHASE,
   MAX_SUPPLY_FOR_GEMS,
-  CATALOG_METADATA_URI,
-  CATALOG_TYPE,
   ASSET_ID_SOLDIER_EGG_FIRE,
   ASSET_ID_SOLDIER_EGG_EARTH,
   ASSET_ID_SOLDIER_EGG_WATER,
