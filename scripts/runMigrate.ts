@@ -7,13 +7,15 @@ import { token } from '../typechain-types/@openzeppelin/contracts';
 import { delay } from '@nomiclabs/hardhat-etherscan/dist/src/etherscan/EtherscanService';
 
 async function main() {
-  const [deployer, ] = await ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log('Deploying contracts with the account:', deployer.address);
   const snakeSoldierFactory = await ethers.getContractFactory('SnakeSoldier');
   const snakeSoldiers = <SnakeSoldier>(
     snakeSoldierFactory.attach('0x8F64Ce931f0D36430B971548b81264EeF3bD9B97')
   );
-  const ids: number[] = [1, 2, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38];
+  const ids: number[] = [
+    1, 2, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+  ];
   for (let i = 201; i <= 680; i++) {
     ids.push(i);
   }
@@ -45,16 +47,15 @@ async function main() {
   await snakeSoldiers.setPaused(true);
   await snakeSoldiers.enableNextPhase(SOLDIER_PRICE, COMMANDER_PRICE, GENERAL_PRICE);
   await snakeSoldiers.enableNextPhase(SOLDIER_PRICE, COMMANDER_PRICE, GENERAL_PRICE);
-  console.log('Paused and enabled 2 phases')
+  console.log('Paused and enabled 2 phases');
   await delay(12000);
-  
 
   tx = await snakeSoldiers.migrate(owners.slice(0, 2), 2);
   await tx.wait();
   tx = await snakeSoldiers.migrate(owners.slice(2, 20), 1);
   await tx.wait();
   for (let i = 20; i < 500; i += 48) {
-    console.log('Migrating from ', i, ' to ', i + 48)
+    console.log('Migrating from ', i, ' to ', i + 48);
     let tx = await snakeSoldiers.migrate(owners.slice(i, i + 48), 0);
     await tx.wait();
   }

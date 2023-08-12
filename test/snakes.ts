@@ -207,9 +207,7 @@ describe('SnakeSoldiers', async () => {
 
     it('cannot mint with the wrong price', async function () {
       await expect(
-        snakeSoldiers
-          .connect(buyer)
-          .mint(buyer.address, 1, GENERAL_RANK, { value: SOLDIER_PRICE }),
+        snakeSoldiers.connect(buyer).mint(buyer.address, 1, GENERAL_RANK, { value: SOLDIER_PRICE }),
       ).to.be.revertedWithCustomError(snakeSoldiers, 'MintUnderpriced');
     });
 
@@ -466,9 +464,7 @@ describe('SnakeSoldiers', async () => {
       });
 
       it('cannot withdraw raised funds if not owner', async function () {
-        const expectedBalance = SOLDIER_PRICE.mul(4)
-          .add(COMMANDER_PRICE.mul(2))
-          .add(GENERAL_PRICE);
+        const expectedBalance = SOLDIER_PRICE.mul(4).add(COMMANDER_PRICE.mul(2)).add(GENERAL_PRICE);
         await expect(
           snakeSoldiers.connect(notOwner).withdrawRaised(notOwner.address, expectedBalance),
         ).to.be.revertedWithCustomError(snakeSoldiers, 'RMRKNotOwner');
@@ -509,8 +505,8 @@ describe('SnakeSoldiers', async () => {
         await expect(
           snakeSoldiers
             .connect(buyer)
-            .mint(buyer.address, 1, GENERAL_RANK, { value: GENERAL_PRICE }))
-            .to.be.revertedWithCustomError(snakeSoldiers, 'MintOverMax');
+            .mint(buyer.address, 1, GENERAL_RANK, { value: GENERAL_PRICE }),
+        ).to.be.revertedWithCustomError(snakeSoldiers, 'MintOverMax');
       });
 
       it('does reuse ids after burn', async function () {
@@ -576,9 +572,11 @@ describe('SnakeSoldiers', async () => {
             [bn(tokenId), skillGem.address],
           ]);
 
-          expect(await elementGem.tokenURI(tokenId)).to.eql(`${BASE_URI_GEMS}/elements/earth`);
-          expect(await factionGem.tokenURI(tokenId)).to.eql(`${BASE_URI_GEMS}/factions/mountain`);
-          expect(await skillGem.tokenURI(tokenId)).to.eql(`${BASE_URI_GEMS}/skills/tank`);
+          expect(await elementGem.tokenURI(tokenId)).to.eql(`${BASE_URI_GEMS}/elements/earth.json`);
+          expect(await factionGem.tokenURI(tokenId)).to.eql(
+            `${BASE_URI_GEMS}/factions/mountain.json`,
+          );
+          expect(await skillGem.tokenURI(tokenId)).to.eql(`${BASE_URI_GEMS}/skills/tank.json`);
         });
 
         it('does not autoaccept NFTs which are not set to be auto accepted', async function () {
@@ -593,12 +591,47 @@ describe('SnakeSoldiers', async () => {
         it('cannot transfer faction gem if not passport holder', async function () {
           await factionGem.setClaimActive();
           await factionGem.connect(buyer).claim(1);
+          expect(
+            await factionGem.isTransferable(
+              1,
+              ethers.constants.AddressZero,
+              ethers.constants.AddressZero,
+            ),
+          ).to.eql(false);
 
           await expect(
             snakeSoldiers
               .connect(buyer)
               .transferChild(1, buyer.address, 0, 0, factionGem.address, 1, false, '0x'),
           ).to.be.revertedWithCustomError(factionGem, 'RMRKCannotTransferSoulbound');
+        });
+
+        it('can transfer faction gem if it is forest even if not passport holder', async function () {
+          const forestSnakeId = 24;
+          await factionGem.setClaimActive();
+          await factionGem.connect(buyer).claim(forestSnakeId);
+
+          expect(
+            await factionGem.isTransferable(
+              forestSnakeId,
+              ethers.constants.AddressZero,
+              ethers.constants.AddressZero,
+            ),
+          ).to.eql(true);
+
+          await snakeSoldiers
+            .connect(buyer)
+            .transferChild(
+              forestSnakeId,
+              buyer.address,
+              0,
+              0,
+              factionGem.address,
+              forestSnakeId,
+              false,
+              '0x',
+            );
+          expect(await factionGem.balanceOf(buyer.address)).to.eql(bn(1));
         });
 
         it('can transfer faction gem if passport holder and passport is burned', async function () {
@@ -630,141 +663,147 @@ describe('SnakeSoldiers', async () => {
 
           it('assigns gems to generals as expected (full match)', async function () {
             expect(await elementGem.getAssetMetadata(1, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/earth`,
+              `${BASE_URI_GEMS}/elements/earth.json`,
             );
             expect(await factionGem.getAssetMetadata(1, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/mountain`,
+              `${BASE_URI_GEMS}/factions/mountain.json`,
             );
-            expect(await skillGem.getAssetMetadata(1, 1)).to.eql(`${BASE_URI_GEMS}/skills/tank`);
+            expect(await skillGem.getAssetMetadata(1, 1)).to.eql(
+              `${BASE_URI_GEMS}/skills/tank.json`,
+            );
 
             expect(await elementGem.getAssetMetadata(2, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/water`,
+              `${BASE_URI_GEMS}/elements/water.json`,
             );
             expect(await factionGem.getAssetMetadata(2, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/islands`,
+              `${BASE_URI_GEMS}/factions/islands.json`,
             );
             expect(await skillGem.getAssetMetadata(2, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/healer`,
+              `${BASE_URI_GEMS}/skills/healer.json`,
             );
 
             expect(await elementGem.getAssetMetadata(3, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/air`,
+              `${BASE_URI_GEMS}/elements/air.json`,
             );
             expect(await factionGem.getAssetMetadata(3, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/valley`,
+              `${BASE_URI_GEMS}/factions/valley.json`,
             );
             expect(await skillGem.getAssetMetadata(3, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/sniper`,
+              `${BASE_URI_GEMS}/skills/sniper.json`,
             );
 
             expect(await elementGem.getAssetMetadata(4, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/fire`,
+              `${BASE_URI_GEMS}/elements/fire.json`,
             );
             expect(await factionGem.getAssetMetadata(4, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/desert`,
+              `${BASE_URI_GEMS}/factions/desert.json`,
             );
             expect(await skillGem.getAssetMetadata(4, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/combat`,
+              `${BASE_URI_GEMS}/skills/meele.json`,
             );
           });
 
           it('assigns gems to commanders as expected (skill matches element)', async function () {
             expect(await elementGem.getAssetMetadata(21, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/earth`,
+              `${BASE_URI_GEMS}/elements/earth.json`,
             );
             expect(await factionGem.getAssetMetadata(21, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/mountain`,
+              `${BASE_URI_GEMS}/factions/mountain.json`,
             );
-            expect(await skillGem.getAssetMetadata(21, 1)).to.eql(`${BASE_URI_GEMS}/skills/tank`);
+            expect(await skillGem.getAssetMetadata(21, 1)).to.eql(
+              `${BASE_URI_GEMS}/skills/tank.json`,
+            );
 
             expect(await elementGem.getAssetMetadata(22, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/water`,
+              `${BASE_URI_GEMS}/elements/water.json`,
             );
             expect(await factionGem.getAssetMetadata(22, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/islands`,
+              `${BASE_URI_GEMS}/factions/islands.json`,
             );
             expect(await skillGem.getAssetMetadata(22, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/healer`,
+              `${BASE_URI_GEMS}/skills/healer.json`,
             );
 
             expect(await elementGem.getAssetMetadata(23, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/air`,
+              `${BASE_URI_GEMS}/elements/air.json`,
             );
             expect(await factionGem.getAssetMetadata(23, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/valley`,
+              `${BASE_URI_GEMS}/factions/valley.json`,
             );
             expect(await skillGem.getAssetMetadata(23, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/sniper`,
+              `${BASE_URI_GEMS}/skills/sniper.json`,
             );
 
             expect(await elementGem.getAssetMetadata(24, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/fire`,
+              `${BASE_URI_GEMS}/elements/fire.json`,
             );
             expect(await factionGem.getAssetMetadata(24, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/forest`,
+              `${BASE_URI_GEMS}/factions/forest.json`,
             );
             expect(await skillGem.getAssetMetadata(24, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/combat`,
+              `${BASE_URI_GEMS}/skills/meele.json`,
             );
 
             expect(await elementGem.getAssetMetadata(25, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/earth`,
+              `${BASE_URI_GEMS}/elements/earth.json`,
             );
             expect(await factionGem.getAssetMetadata(25, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/desert`,
+              `${BASE_URI_GEMS}/factions/desert.json`,
             );
-            expect(await skillGem.getAssetMetadata(25, 1)).to.eql(`${BASE_URI_GEMS}/skills/tank`);
+            expect(await skillGem.getAssetMetadata(25, 1)).to.eql(
+              `${BASE_URI_GEMS}/skills/tank.json`,
+            );
           });
 
           it('assigns gems to soldiers as expected', async function () {
             expect(await elementGem.getAssetMetadata(201, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/earth`,
+              `${BASE_URI_GEMS}/elements/earth.json`,
             );
             expect(await factionGem.getAssetMetadata(201, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/mountain`,
+              `${BASE_URI_GEMS}/factions/mountain.json`,
             );
             expect(await skillGem.getAssetMetadata(201, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/combat`,
+              `${BASE_URI_GEMS}/skills/meele.json`,
             );
 
             expect(await elementGem.getAssetMetadata(202, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/water`,
+              `${BASE_URI_GEMS}/elements/water.json`,
             );
             expect(await factionGem.getAssetMetadata(202, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/islands`,
+              `${BASE_URI_GEMS}/factions/islands.json`,
             );
             expect(await skillGem.getAssetMetadata(202, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/tank`,
+              `${BASE_URI_GEMS}/skills/tank.json`,
             );
 
             expect(await elementGem.getAssetMetadata(203, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/air`,
+              `${BASE_URI_GEMS}/elements/air.json`,
             );
             expect(await factionGem.getAssetMetadata(203, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/valley`,
+              `${BASE_URI_GEMS}/factions/valley.json`,
             );
             expect(await skillGem.getAssetMetadata(203, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/tank`,
+              `${BASE_URI_GEMS}/skills/tank.json`,
             );
 
             expect(await elementGem.getAssetMetadata(204, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/fire`,
+              `${BASE_URI_GEMS}/elements/fire.json`,
             );
             expect(await factionGem.getAssetMetadata(204, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/forest`,
+              `${BASE_URI_GEMS}/factions/forest.json`,
             );
             expect(await skillGem.getAssetMetadata(204, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/healer`,
+              `${BASE_URI_GEMS}/skills/healer.json`,
             );
 
             expect(await elementGem.getAssetMetadata(205, 1)).to.eql(
-              `${BASE_URI_GEMS}/elements/earth`,
+              `${BASE_URI_GEMS}/elements/earth.json`,
             );
             expect(await factionGem.getAssetMetadata(205, 1)).to.eql(
-              `${BASE_URI_GEMS}/factions/desert`,
+              `${BASE_URI_GEMS}/factions/desert.json`,
             );
             expect(await skillGem.getAssetMetadata(205, 1)).to.eql(
-              `${BASE_URI_GEMS}/skills/healer`,
+              `${BASE_URI_GEMS}/skills/healer.json`,
             );
           });
         });

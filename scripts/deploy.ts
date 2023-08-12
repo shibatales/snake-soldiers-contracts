@@ -11,9 +11,7 @@ import * as C from './constants';
 import addMainAssets from './addMainAssets';
 import configureCatalog from './configureCatalog';
 
-async function deployContracts(
-  fromTesting: boolean,
-): Promise<{
+async function deployContracts(fromTesting: boolean): Promise<{
   snakeSoldiers: SnakeSoldier;
   elementGem: ElementGem;
   factionGem: FactionGem;
@@ -32,10 +30,7 @@ async function deployContracts(
   const snakeCatalogFactory = await ethers.getContractFactory('SnakeCatalog');
 
   const snakeSoldiers = <SnakeSoldier>(
-    await snakeSoldierFactory.deploy(
-      C.SNAKE_SOLDIER_COLLECTION_METADATA,
-      C.MAX_GIFTS_PER_PHASE,
-    )
+    await snakeSoldierFactory.deploy(C.SNAKE_SOLDIER_COLLECTION_METADATA, C.MAX_GIFTS_PER_PHASE)
   );
 
   const passport = <SerpenTerraPassport>(
@@ -108,10 +103,7 @@ async function deployContracts(
   if (!fromTesting) {
     await run('verify:verify', {
       address: snakeSoldiers.address,
-      constructorArguments: [
-        C.SNAKE_SOLDIER_COLLECTION_METADATA,
-        C.MAX_GIFTS_PER_PHASE,
-      ],
+      constructorArguments: [C.SNAKE_SOLDIER_COLLECTION_METADATA, C.MAX_GIFTS_PER_PHASE],
     });
     await run('verify:verify', {
       address: passport.address,

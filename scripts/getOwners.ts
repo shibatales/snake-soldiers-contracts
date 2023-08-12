@@ -14,7 +14,9 @@ async function main() {
     snakeSoldierFactory.attach('0x3ab955216BdD76f51fbe02A3fe237D6612BBD09F')
   );
   const owners: string[] = [];
-  const ids: number[] = [1, 2, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38];
+  const ids: number[] = [
+    1, 2, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+  ];
   for (let i = 201; i <= 680; i++) {
     ids.push(i);
   }
